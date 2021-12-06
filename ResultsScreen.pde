@@ -40,39 +40,34 @@ class ResultsScreen extends GameObject {
     this.overlayRect.fill = color(0, 0, 0, 1);
     this.children.add(overlayRect);
 
-    this.timeBonusLabel = new Text(400, 320, "TIME BONUS:", g_consolas48);
+    this.timeBonusLabel = new Text(400, 320, "TIME BONUS:", g_consolas48, color(0, 0, 0, 1));
     this.timeBonusLabel.x = ((width - (this.timeBonusLabel.w * 2)) / 2) + 48;
-    this.timeBonusLabel.fill = color(0, 0, 0, 1);
-    this.mistakeBonusLabel = new Text(400, 368, "MISTAKE BONUS:", g_consolas48);
+    this.mistakeBonusLabel = new Text(400, 368, "MISTAKE BONUS:", g_consolas48, color(0, 0, 0, 1));
     this.mistakeBonusLabel.x = ((width - (this.mistakeBonusLabel.w * 2)) / 2) + 48;
-    this.mistakeBonusLabel.fill = color(0, 0, 0, 1);
-    this.totalScoreLabel = new Text(400, 452, "SCORE:", g_consolas48);
-    this.totalScoreLabel.x =((width - (this.totalScoreLabel.w * 2)) / 2) + 48;
-    this.totalScoreLabel.fill = color(0, 0, 0, 1);
+    this.totalScoreLabel = new Text(400, 452, "SCORE:", g_consolas48, color(0, 0, 0, 1));
+    this.totalScoreLabel.x = ((width - (this.totalScoreLabel.w * 2)) / 2) + 48;
 
-    this.highScoreLabel = new Text(400, 540, "NEW HIGH SCORE!", g_consolas48);
-    this.highScoreLabel.x = (width - (this.highScoreLabel.w)) / 2;
-    this.highScoreLabel.fill = color(0, 0, 0, 1);
+    this.highScoreLabel = new Text(400, 540, "NEW HIGH SCORE!", g_consolas48, color(0, 0, 0, 1));
+    alignHorizontalCentre(this.highScoreLabel, width);
 
     this.children.add(timeBonusLabel);
     this.children.add(mistakeBonusLabel);
     this.children.add(totalScoreLabel);
     this.children.add(highScoreLabel);
 
-    this.timeBonus = new Text(400, 320, "0", g_consolas48);
-    this.timeBonus.fill = color(0, 0, 0, 1);
-    this.mistakeBonus =new Text(400, 368, "0", g_consolas48);
-    this.mistakeBonus.fill = color(0, 0, 0, 1);
-    this.totalScore = new Text(400, 452, "0", g_consolas48);
-    this.totalScore.fill = color(0, 0, 0, 1);
+    this.timeBonus = new Text(400, 320, "0", g_consolas48, color(0, 0, 0, 1));
+    this.timeBonus.x = width - this.timeBonus.w - 396;
+    this.mistakeBonus = new Text(400, 368, "0", g_consolas48, color(0, 0, 0, 1));
+    this.mistakeBonus.x = width - this.mistakeBonus.w - 396;
+    this.totalScore = new Text(400, 452, "0", g_consolas48, color(0, 0, 0, 1));
+    this.totalScore.x = width - this.totalScore.w - 396;
 
     this.children.add(timeBonus);
     this.children.add(mistakeBonus);
     this.children.add(totalScore);
 
-    this.youLose = new Text(400, -200, "GAME OVER", g_consolas96);
-    this.youLose.x = (width - (this.youLose.w)) / 2;
-    this.youLose.fill = color(0, 0, 0, 1);
+    this.youLose = new Text(400, -200, "GAME OVER", g_consolas96, color(0, 0, 0, 1));
+    alignHorizontalCentre(this.youLose, width);
 
     this.children.add(youLose);
   }
@@ -102,6 +97,15 @@ class ResultsScreen extends GameObject {
     var scene = new TitleScene();
     scene.forceOpen();
     g_mainScene.goToScene(scene);
+  }
+
+  void cleanup() {
+    for (int i = 0; i < this.children.size(); i++) {
+      GameObject child = this.children.get(i);
+      if (child instanceof AnimationBase) {
+        ((AnimationBase)child).stop();
+      }
+    }
   }
 
   int calculateScore() {

@@ -2,7 +2,7 @@
 char[] titleChars = { 'H', 0, 'n', 'g', 'm', 0, 'n', '!' };
 
 class TitleText extends GameObject {
-  private Storyboard _titleStoryboard;
+  private Storyboard titleStoryboard;
   private final float ANIMATION_TIME = 1.0f;
   private final float ANIMATION_SPACE = 1.0f / 3.0f;
   private final int ANIMATION_Y = 420;
@@ -11,16 +11,16 @@ class TitleText extends GameObject {
     super(x, y, g_consolas64CharWidth * 2 * titleChars.length, 64);
     this.x = (width - this.w) / 2f;
 
-    _titleStoryboard = new Storyboard();
+    titleStoryboard = new Storyboard();
     for (int i = 0; i < titleChars.length; i++) {
       HangmanCharacter character = new HangmanCharacter(g_consolas64CharWidth * 2 * i, 0, titleChars[i]);
-      _titleStoryboard.add(i * ANIMATION_SPACE, new Animation(0, ANIMATION_Y, ANIMATION_TIME, EASE_OUT_CUBIC, f -> character.y = f));
+      titleStoryboard.add(i * ANIMATION_SPACE, new Animation(0, ANIMATION_Y, ANIMATION_TIME, EASE_OUT_CUBIC, f -> character.y = f));
       this.children.add(character);
     }
   }
 
   Storyboard getStoryboard() {
-    return _titleStoryboard;
+    return titleStoryboard;
   }
 
   void skipAnimation() {

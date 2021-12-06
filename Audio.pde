@@ -33,7 +33,7 @@ class Audio {
 
       for (int i = 0; i <backgroundMusic.length; i++) {
         String[] parts = splitTokens(backgroundMusic[i], ",");
-        bgm[i] = new BgmInfo(parts);
+        bgm[i] = new BgmInfo(i, parts);
       }
 
       audioInitialised = true;
@@ -53,6 +53,8 @@ class Audio {
     if (!audioInitialised) return;
 
     if (this.playingBgm != null) {
+      if (this.playingBgm.id == bgm) return;
+
       this.nextBgm = this.bgm[bgm];
       this.nextBgm.setVolume(0);
       this.fadeDuration = fadeTime;
@@ -90,13 +92,10 @@ class Audio {
     }
   }
 
-  void draw() {
-    noClip();
-    fill(0, 0, 0);
-    textFont(g_consolas32);
-    text("main_volume: " + this.playingBgm.getVolume(), 16, 64);
-    text("fade_time: " + this.fadeTime, 16, 96);
-    text("fade_time_total: " + this.fadeDuration, 16, 96 + 32);
+  void draw(int start) {
+    text("main_volume: " + this.playingBgm.getVolume(), 16, start + 24);
+    text("fade_time: " + this.fadeTime, 16, start + 48);
+    text("fade_time_total: " + this.fadeDuration, 16, start + 72);
   }
 
   private void setVolume(AudioSample sample, float sfxVolume) {
@@ -108,21 +107,24 @@ class Audio {
   }
 
   private class BgmInfo {
+    int id;
+
     private AudioPlayer player;
     private boolean shouldLoop;
     private int loopStartMs;
     private int loopEndMs;
 
-    public BgmInfo(String[] parts) {
-      player = minim.loadFile("bgm/" + parts[0] + ".wav");
+    public BgmInfo(int id, String[] parts) {
+      this.id = id;
+      this.player = minim.loadFile("bgm/" + parts[0] + ".wav");
 
       float sampleRate = player.getFormat().getSampleRate() / 1000.0f; // samples/ms
       int loopStart = int(parts[2]);
       int loopEnd = int(parts[3]);
 
-      loopStartMs = (int)(loopStart / sampleRate);
-      loopEndMs = (int)(loopEnd / sampleRate);
-      shouldLoop = loopStartMs != loopEndMs;
+      this.loopStartMs = (int)(loopStart / sampleRate);
+      this.loopEndMs = (int)(loopEnd / sampleRate);
+      this.shouldLoop = loopStartMs != loopEndMs;
 
       println(parts[0] + " loopStart: " + loopStartMs + " loopEnd: " + loopEndMs);
     }

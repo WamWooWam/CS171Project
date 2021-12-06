@@ -20,7 +20,6 @@ class Background extends GameObject {
     }
   }
 
-  PShape square;
   Square[] squares;
 
   public Background() {
@@ -30,19 +29,6 @@ class Background extends GameObject {
     for (int i = 0; i < squares.length; i++) {
       squares[i] = new Square();
     }
-
-    // create the shape used to draw the squares.
-    square = createShape();
-    square.beginShape();
-    square.fill(255, 255, 255);
-    square.stroke(192, 192, 192);
-    square.strokeWeight(1);
-    square.vertex(-25, -25);
-    square.vertex(-25, 25);
-    square.vertex(25, 25);
-    square.vertex(25, -25);
-    square.endShape(CLOSE);
-    
     // simulate running for 5 seconds
     this.updateObject(5);
   }
@@ -65,6 +51,10 @@ class Background extends GameObject {
   }
 
   void drawObject() {
+    fill(255, 255, 255);
+    stroke(192, 192, 192);
+    strokeWeight(1);
+
     // run through each square
     for (int i = 0; i < squares.length; i++) {
       Square bgSquare = squares[i];
@@ -73,7 +63,7 @@ class Background extends GameObject {
       pushMatrix();
       translate(bgSquare.x, bgSquare.y);
       rotate(radians(bgSquare.rotation));
-      shape(square);
+      square(-25, -25, 50);
       popMatrix();
     }
   }

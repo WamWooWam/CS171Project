@@ -7,64 +7,64 @@ enum MenuState {
 }
 
 class MainMenuPage1 extends GameObject {
-  private int _selectedButton = 0;
-  private ArrayList<MenuButton> _buttons;
-  private Text _difficultyText;
-  private MainMenu _menu;
+  private int selectedButton = 0;
+  private ArrayList<MenuButton> buttons;
+  private Text difficultyText;
+  private MainMenu menu;
 
   public MainMenuPage1(MainMenu menu, float x, float y, float w, float h) {
     super(x, y, w, h);
 
-    _menu = menu;
-    _buttons = new ArrayList<MenuButton>();
-    _buttons.add(new MenuButton(12, 84, w - 24, 48, "Easy"));
-    _buttons.add(new MenuButton(12, 144, w - 24, 48, "Normal"));
-    _buttons.add(new MenuButton(12, 204, w - 24, 48, "Hard"));
-    _buttons.add(new MenuButton(12, 264, w - 24, 48, "Custom"));
+    this.menu = menu;
+    buttons = new ArrayList<MenuButton>();
+    buttons.add(new MenuButton(12, 84, w - 24, 48, "Easy"));
+    buttons.add(new MenuButton(12, 144, w - 24, 48, "Normal"));
+    buttons.add(new MenuButton(12, 204, w - 24, 48, "Hard"));
+    buttons.add(new MenuButton(12, 264, w - 24, 48, "Custom"));
 
-    _difficultyText = new Text(12, 12, "Select a Difficulty", g_consolas48);
-    _difficultyText.x = (w - _difficultyText.w) / 2;
+    difficultyText = new Text(12, 12, "Select a Difficulty", g_consolas48);
+    alignHorizontalCentre(difficultyText, w);
 
-    this.children.add(_difficultyText);
-    this.children.addAll(_buttons);
+    this.children.add(difficultyText);
+    this.children.addAll(buttons);
   }
 
   void updateObject(float deltaTime) {
-    for (int i = 0; i < _buttons.size(); i++) {
-      _buttons.get(i).isSelected = i == _selectedButton;
+    for (int i = 0; i < buttons.size(); i++) {
+      buttons.get(i).isSelected = i == selectedButton;
     }
   }
 
   void keyPressed() {
-    if (_menu.state != MenuState.PAGE1) return;
+    if (menu.state != MenuState.PAGE1) return;
     if (keyCode == UP) {
-      _selectedButton = _selectedButton - 1;
+      selectedButton = selectedButton - 1;
       g_audio.playCue(0);
     }
 
     if (keyCode == DOWN) {
-      _selectedButton = _selectedButton + 1;
+      selectedButton = selectedButton + 1;
       g_audio.playCue(0);
     }
 
-    if (_selectedButton >= _buttons.size()) {
-      _selectedButton = 0;
+    if (selectedButton >= buttons.size()) {
+      selectedButton = 0;
     }
 
-    if (_selectedButton < 0) {
-      _selectedButton = _buttons.size() - 1;
+    if (selectedButton < 0) {
+      selectedButton = buttons.size() - 1;
     }
 
     if (keyCode == ENTER || keyCode == RETURN) {
-      _menu.state = MenuState.TRANSITION;
+      menu.state = MenuState.TRANSITION;
       g_audio.playCue(1);
 
       var board = new Storyboard();
-      board.add(0.0f, _buttons.get(_selectedButton).getPressAnimation());
-      if (_selectedButton == 3) {
-        board.add(0.2f, new Trigger(() -> _menu.goToCustom()));
+      board.add(0.0f, buttons.get(selectedButton).getPressAnimation());
+      if (selectedButton == 3) {
+        board.add(0.2f, new Trigger(() -> menu.goToCustom()));
       } else {
-        board.add(0.2f, new Trigger(() -> _menu.goToGame(getDifficulty(_selectedButton), null)));
+        board.add(0.2f, new Trigger(() -> menu.goToGame(getDifficulty(selectedButton), null)));
       }
 
       board.begin(this);
@@ -85,13 +85,14 @@ class MainMenuPage2 extends GameObject {
     this.menu = menu;
 
     this.customGame = new Text(12, 12, "Custom Game", g_consolas48);
-    this.customGame.x = (w - customGame.w) / 2;
     this.children.add(customGame);
 
     this.customGameExplain = new Text(12, 64, "Type a word for a friend to guess!", g_consolas32);
-    this.customGameExplain.x = (w - customGameExplain.w) / 2;
     this.children.add(customGameExplain);
 
+    alignHorizontalCentre(customGame, w);
+    alignHorizontalCentre(customGameExplain, w);
+    
     this.characters = new ArrayList<HangmanCharacter>();
     this.addTerminatorChar();
     this.layoutCharacters();

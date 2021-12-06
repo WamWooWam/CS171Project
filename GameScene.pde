@@ -10,7 +10,6 @@ class GameSceneData {
   Difficulty difficulty;
 
   float totalTime;
-  float startTime;
   float remainingTime;
 
   char[] wordState;
@@ -40,7 +39,7 @@ class GameSceneData {
       }
     }
 
-    // switch the music depending on game difficulty
+    // switch the music randomly
     this.bgm = (int)random(2, 6);
 
     // https://youtu.be/TLVGmvmNitg?t=889
@@ -67,14 +66,15 @@ class GameSceneData {
   }
 
   void startPlay() {
-    startTime = System.nanoTime() / NS_TO_SEC;
     state = GameState.PLAYING;
   }
 
-  void update() {
+  void pause() {
+  }
+
+  void update(float dt) {
     if (state == GameState.PLAYING) {
-      float currentTime = System.nanoTime() / NS_TO_SEC;
-      remainingTime = max(0, totalTime - (currentTime - startTime));
+      remainingTime = max(0, remainingTime - dt);
       if (remainingTime == 0) {
         state = GameState.LOST;
       }
@@ -83,8 +83,13 @@ class GameSceneData {
 
   void keyPressed(char keyChar) {
     if (state != GameState.PLAYING) return;
-    keyChar = Character.toLowerCase(keyChar);
 
+    if (keyCode == ESC) {
+      g_mainScene.togglePause();
+      state = GameState.INTRO;
+    }
+
+    keyChar = Character.toLowerCase(keyChar);
     if (ALLOWED_CHARS.indexOf(keyChar) == -1 || this.usedCharacters.contains(keyChar)) return;
 
     boolean flag = false;
@@ -160,16 +165,13 @@ class GameScene extends Scene {
       characterAnimation.add((i % 2) / 2.0f, new Animation(0, 10, 1f, -1, LoopMode.REVERSE, EASE_IN_OUT_SINE, (f) -> character.y = startY + f));
     }
 
-    ready = new Text(0, 0, "Ready", g_consolas96);
-    ready.fill = color(0, 0, 0, 1);
-    set = new Text(0, 0, "Set", g_consolas96);
-    set.fill = color(0, 0, 0, 1);
-    go = new Text(0, 0, "Go!", g_consolas96);
-    go.fill = color(0, 0, 0, 1);
+    ready = new Text(0, 0, "Ready", g_consolas96, color(0, 0, 0, 1));
+    set = new Text(0, 0, "Set", g_consolas96, color(0, 0, 0, 1));
+    go = new Text(0, 0, "Go!", g_consolas96, color(0, 0, 0, 1));
 
-    centerObject(ready);
-    centerObject(set);
-    centerObject(go);
+    alignCentre(ready, width, height - 64);
+    alignCentre(set, width, height - 64);
+    alignCentre(go, width, height - 64);
 
     this.children.add(ready);
     this.children.add(set);
@@ -183,6 +185,12 @@ class GameScene extends Scene {
   }
 
   void awakeObject() {
+    this.playIntro();
+  }
+
+  void playIntro() {
+    this.characterAnimation.stop();
+
     var sb = new Storyboard();
 
     sb.add(0.0f, new Trigger(() -> g_audio.playBgm(this.state.bgm, 0.5f)))
@@ -202,7 +210,11 @@ class GameScene extends Scene {
   }
 
   void updateObject(float deltaTime) {
-    this.state.update();
+    if (wasPaused) {
+      playIntro();
+    }
+
+    this.state.update(deltaTime);
     this.timer.x = width - this.timer.w - 32;
 
     // if the player has 30 seconds left or less, warn them
@@ -219,6 +231,7 @@ class GameScene extends Scene {
     for (int i = 0; i < state.usedCharacters.size(); i++) {
       if (state.word.indexOf(state.usedCharacters.get(i))== -1) {
         var text = usedCharacters[i];
+        text.setActive(true);
         text.setText("" + state.usedCharacters.get(i));
       }
     }
@@ -278,6 +291,7 @@ class GameScene extends Scene {
       } while (flag);
 
       usedCharacters[i] = text;
+      usedCharacters[i].setActive(false);
       this.children.add(usedCharacters[i]);
     }
 
@@ -290,8 +304,14 @@ class GameScene extends Scene {
     storyboard.begin(this);
   }
 
-  void centerObject(GameObject obj) {
-    obj.x = (width - obj.w) / 2;
-    obj.y = (height - (obj.h * 2)) / 2;
+  void cleanup() {
+    for (int i = 0; i < this.children.size(); i++) {
+      GameObject child = this.children.get(i);
+      if (child instanceof AnimationBase) {
+        ((AnimationBase)child).stop();
+      }
+    }
+
+    resultsScreen.cleanup();
   }
 }

@@ -4,7 +4,10 @@ import java.awt.geom.Rectangle2D;
 // a GameObject is a drawable with a position, bounds, and children. they can be made active or inactive
 class GameObject implements Drawable {
   private boolean isActive = true;
+  private boolean isPaused = false;
+
   private boolean hasAwoken = false;
+  protected boolean wasPaused = false;
 
   public float x;
   public float y;
@@ -29,6 +32,17 @@ class GameObject implements Drawable {
     }
   }
 
+  public boolean getPaused() {
+    return isPaused;
+  }
+
+  public void setPaused(boolean paused) {
+    isPaused = paused;
+    if (isPaused) {
+      wasPaused = true;
+    }
+  }
+
   // this returns a rectangle containing the bounds of the object
   // which is incredibly useful for calculating intersections
   public Rectangle2D getBounds() {
@@ -43,15 +57,17 @@ class GameObject implements Drawable {
     this.scale = 1;
     this.isActive = true;
     this.children = new ArrayList<GameObject>();
-    this.fill = color(255,255,255);
-    this.stroke = color(0,0,0);
+    this.fill = color(255, 255, 255);
+    this.stroke = color(0, 0, 0);
   }
 
   final void update(float deltaTime) {
-    if (!isActive) {
+    if (!isActive || isPaused) {
       return;
     }
 
+    g_objectUpdateCount++;
+    
     if (!hasAwoken) {
       awakeObject();
       hasAwoken = true;
@@ -61,16 +77,21 @@ class GameObject implements Drawable {
 
     for (int i = 0; i < children.size(); i++)
       children.get(i).update(deltaTime);
+
+    wasPaused = false;
   }
 
   final void draw() {
     if (!isActive) {
       return;
     }
+    
+    g_objectDrawCount++;
+
     pushMatrix();
     translate(x, y);
 
-    if (DRAW_OBJECT_BOUNDS) {
+    if (DEBUG_OBJECT_BOUNDS) {
       fill(255, 255, 255, 1);
       stroke(0, 0, 0);
       strokeWeight(1);
@@ -93,7 +114,7 @@ class GameObject implements Drawable {
 
     for (GameObject child : children)
       child.draw();
-    
+
     popMatrix();
   }
 

@@ -4,9 +4,14 @@ static final int MAX_MISTAKES = 10;
 static final String ALLOWED_CHARS = "abcdefghijklmnopqrstuvwxyz";
 
 // debugging flags
-static final boolean DRAW_OBJECT_BOUNDS = false;
-static final boolean DRAW_AUDIO_DEBUG = false;
-static final boolean DRAW_FRAME_RATE = true;
+static final boolean DEBUG_OBJECT_BOUNDS = false;
+static final boolean DEBUG_FRAME_RATE = true;
+static final boolean DEBUG_OBJECT_COUNT = true;
+static final boolean DEBUG_AUDIO = true;
+static final boolean DEBUG_ANIMATION = true;
+
+int g_objectUpdateCount;
+int g_objectDrawCount;
 
 MainScene g_mainScene;
 
@@ -18,7 +23,10 @@ WordList g_hardWords;
 
 // as consolas is a monospaced font, we can assume the same width for all characters.
 
+PFont g_consolas24;
+float g_consolas24CharWidth;
 PFont g_consolas32;
+float g_consolas32CharWidth;
 PFont g_consolas48;
 float g_consolas48CharWidth;
 PFont g_consolas56;
@@ -47,6 +55,18 @@ Difficulty getDifficulty(int i) {
   // this is slow, but should be called at most once per game
   // source: https://stackoverflow.com/questions/5878952/cast-int-to-enum-in-java
   return Difficulty.values()[i];
+}
+
+void alignHorizontalCentre(GameObject obj, float bounds) {
+  obj.x = (bounds - obj.w) / 2;
+}
+
+void alignVerticalCentre(GameObject obj, float bounds) {
+  obj.y = (bounds - (obj.h)) / 2;
+}
+void alignCentre(GameObject obj, float maxWidth, float maxHeight) {
+  alignHorizontalCentre(obj, maxWidth);
+  alignVerticalCentre(obj, maxHeight);
 }
 
 SaveData g_saveData;

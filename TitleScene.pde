@@ -8,48 +8,47 @@ enum TitleSceneState {
 
 
 class TitleScene extends Scene {
-  private TitleSceneState _state;
-  private TitleText _titleText;
-  private Text _pressStartText;
-  private MainMenu _mainMenu;
+  private TitleSceneState state;
+  private TitleText titleText;
+  private Text pressStartText;
+  private MainMenu mainMenu;
 
-  private float _titleTextDuration;
-  private Storyboard _titleSequence;
-  private Storyboard _menuOpeningSequence;
+  private float titleTextDuration;
+  private Storyboard titleSequence;
+  private Storyboard menuOpeningSequence;
 
   public TitleScene() {
     this.children.add(new Background());
 
-    _state = TitleSceneState.TITLE_DROP;
-    _titleText = new TitleText(0, -100);
-    _pressStartText = new Text(0, 380, "PRESS START!", g_consolas64);
-    _pressStartText.x = (width - _pressStartText.w) / 2;
-    _pressStartText.fill = color(0, 0, 0, 1);
+    state = TitleSceneState.TITLE_DROP;
+    titleText = new TitleText(0, -100);
+    pressStartText = new Text(0, 380, "PRESS START!", g_consolas64, color(0, 0, 0, 1));
+    alignHorizontalCentre(pressStartText, width);
 
-    _mainMenu = new MainMenu(this);
-    _mainMenu.setActive(false);
+    mainMenu = new MainMenu(this);
+    mainMenu.setActive(false);
 
-    Storyboard titleTextStoryboard = _titleText.getStoryboard();
+    Storyboard titleTextStoryboard = titleText.getStoryboard();
 
-    _titleTextDuration = titleTextStoryboard.getDuration();
+    titleTextDuration = titleTextStoryboard.getDuration();
 
-    _titleSequence = new Storyboard()
+    titleSequence = new Storyboard()
       .add(0, titleTextStoryboard)
       .then(new Trigger(() -> startPressStart()))
-      .then(new Animation(1, 254, 0.5f, -1, LoopMode.REVERSE, EASE_IN_OUT_SINE, (f) -> _pressStartText.fill = color(0, 0, 0, f)));
+      .then(new Animation(1, 254, 0.5f, -1, LoopMode.REVERSE, EASE_IN_OUT_SINE, (f) -> pressStartText.fill = color(0, 0, 0, f)));
 
-    _menuOpeningSequence = new Storyboard()
-      .add(0.0f, new Animation(-100, -320, 0.5f, EASE_OUT_CUBIC, (f) -> _titleText.y = f))
-      .then(new Trigger(() -> _mainMenu.setActive(true)))
-      .with(_mainMenu.getOpenAnimation());
+    menuOpeningSequence = new Storyboard()
+      .add(0.0f, new Animation(-100, -320, 0.5f, EASE_OUT_CUBIC, (f) -> titleText.y = f))
+      .then(new Trigger(() -> mainMenu.setActive(true)))
+      .with(mainMenu.getOpenAnimation());
 
-    this.children.add(_titleText);
-    this.children.add(_pressStartText);
-    this.children.add(_mainMenu);
+    this.children.add(titleText);
+    this.children.add(pressStartText);
+    this.children.add(mainMenu);
   }
   
   void awakeObject() {
-    if (this._state == TitleSceneState.TITLE_DROP) {
+    if (this.state == TitleSceneState.TITLE_DROP) {
       this.startTitleDrop(); 
     }
     
@@ -57,22 +56,22 @@ class TitleScene extends Scene {
   }
 
   void startTitleDrop() {
-    _state = TitleSceneState.TITLE_DROP;
-    _titleSequence.begin(this);
+    state = TitleSceneState.TITLE_DROP;
+    titleSequence.begin(this);
   }
 
   void startPressStart() {
-    _state = TitleSceneState.PRESS_START;
+    state = TitleSceneState.PRESS_START;
   }
 
   void startMenuOpening() {
-    _state = TitleSceneState.MENU_OPENING;
-    _pressStartText.setActive(false);
-    _menuOpeningSequence.begin(this);
+    state = TitleSceneState.MENU_OPENING;
+    pressStartText.setActive(false);
+    menuOpeningSequence.begin(this);
   }
 
   void startMenuOpen() {
-    _state = TitleSceneState.MENU_OPEN;
+    state = TitleSceneState.MENU_OPEN;
   }
 
   void goToGame(Difficulty difficulty, String word) {
@@ -88,21 +87,26 @@ class TitleScene extends Scene {
   }
 
   void forceOpen() {
-    _titleText.skipAnimation();
+    titleText.skipAnimation();
     this.startMenuOpening();
   }
 
   void keyPressed() {
     super.keyPressed();
-    if (_state == TitleSceneState.TITLE_DROP) {
+    if (state == TitleSceneState.TITLE_DROP) {
       // skip to the end of the title sequence
-      _titleSequence.seek(_titleTextDuration - 0.05f);
-    } else if (_state == TitleSceneState.PRESS_START) {
+      titleSequence.seek(titleTextDuration - 0.05f);
+    } else if (state == TitleSceneState.PRESS_START) {
       g_audio.playCue(1);
       startMenuOpening();
-    } else if (_state == TitleSceneState.MENU_OPENING) {
+    } else if (state == TitleSceneState.MENU_OPENING) {
       // skip to the end of the menu sequence
-      _menuOpeningSequence.seek(_menuOpeningSequence.getDuration() - 0.05f);
+      menuOpeningSequence.seek(menuOpeningSequence.getDuration() - 0.05f);
     }
+  }
+  
+  void cleanup() {
+    titleSequence.stop();
+    menuOpeningSequence.stop();
   }
 }

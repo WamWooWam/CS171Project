@@ -11,6 +11,9 @@
 //
 import java.util.function.Consumer;
 
+int g_activeAnimations;
+int g_attachedAnimations;
+
 enum LoopMode {
   RESTART, REVERSE
 }
@@ -33,7 +36,7 @@ interface AnimationTimer {
 // note how _startTime is a long storing nanoseconds, not a float storing seconds, the latter caused an issue where
 // animations would start to appear choppy after your computer had been on for a certain period of time (around a week)
 // this was caused by floating point precision errors induced by converting such large fixed point numbers into a single
-// precision float. 
+// precision float.
 //
 // this implementation may still overflow, but this should only happen after around 280 days of continuous uptime.
 //
@@ -54,51 +57,59 @@ class DefaultAnimationTimer implements AnimationTimer {
 }
 
 abstract class AnimationBase extends GameObject {
-  protected boolean _running = false;
-  protected Runnable _onCompleted;
+  protected boolean isRunning = false;
 
-  private AnimationTimer _animationTimer;
+  private GameObject attachedGameObject = null;
+  private AnimationTimer animationTimer;
   protected void setAnimationTimer(AnimationTimer timer) {
-    this._animationTimer = timer;
+    this.animationTimer = timer;
   }
 
   AnimationBase() {
     super(0, 0, 0, 0);
-    _animationTimer = new DefaultAnimationTimer();
+    animationTimer = new DefaultAnimationTimer();
   }
 
   abstract float getDuration();
 
   void reset() {
-    this._onCompleted = null;
+    if (attachedGameObject != null) {
+      g_attachedAnimations --;
+      attachedGameObject.children.remove(this);
+    }
+
+    attachedGameObject = null;
   }
 
   boolean getRunning() {
-    return this._running;
+    return this.isRunning;
   }
 
   void begin(GameObject gameObject) {
     this.reset();
 
-    this._onCompleted = () -> gameObject.children.remove(this);
-    this._running = true;
-    this._animationTimer.start();
-    gameObject.children.add(this);
+    this.isRunning = true;
+    this.animationTimer.start();
+    this.attachedGameObject = gameObject;
+    this.attachedGameObject.children.add(this);
+    g_attachedAnimations++;
   }
 
   void stop() {
-    this._running = false;
-    if (this._onCompleted != null) {
-      this._onCompleted.run();
-    }
+    this.isRunning = false;
+    this.reset();
   }
 
   void seek(float time) {
-    _animationTimer.seek(time);
+    animationTimer.seek(time);
   }
 
   float getElapsedSeconds() {
-    return _animationTimer.getElapsedSeconds();
+    return animationTimer.getElapsedSeconds();
+  }
+
+  void onCompleted() {
+    this.reset();
   }
 }
 
@@ -149,7 +160,9 @@ class Animation extends AnimationBase {
   }
 
   void updateObject(float deltaTime) {
-    if (!this._running) return;
+    if (!this.isRunning) return;
+
+    g_activeAnimations += 1;
 
     float rawElapsedTime = this.getElapsedSeconds() - (completedLoops * duration);
     float elapsedTime = min(rawElapsedTime, this.duration);
@@ -167,10 +180,8 @@ class Animation extends AnimationBase {
       completedLoops++;
       if (loops >= completedLoops) {
         // animation complete
-        this._running = false;
-        if (_onCompleted != null) {
-          _onCompleted.run();
-        }
+        this.isRunning = false;
+        this.onCompleted();
       }
     }
   }
@@ -181,10 +192,10 @@ class Animation extends AnimationBase {
 // event to be run at any point in a storyboard.
 //
 class Trigger extends AnimationBase {
-  private Runnable _trigger;
+  private Runnable trigger;
 
   public Trigger(Runnable trigger) {
-    this._trigger = trigger;
+    this.trigger = trigger;
   }
 
   float getDuration() {
@@ -192,13 +203,13 @@ class Trigger extends AnimationBase {
   }
 
   void updateObject(float deltaTime) {
-    if (!this._running) return;
+    if (!this.isRunning) return;
 
-    this._running = false;
-    this._trigger.run();
-    if (_onCompleted != null) {
-      _onCompleted.run();
-    }
+    g_activeAnimations += 1;
+
+    this.isRunning = false;
+    this.trigger.run();
+    this.onCompleted();
   }
 }
 
@@ -210,7 +221,7 @@ class Interval extends AnimationBase {
   private float interval;
   private float duration;
   private Runnable trigger;
-  
+
   private float nextInterval = -1;
   public Interval(float interval, float duration, Runnable trigger) {
     this.interval = interval;
@@ -228,7 +239,9 @@ class Interval extends AnimationBase {
   }
 
   void updateObject(float deltaTime) {
-    if (!this._running) return;
+    if (!this.isRunning) return;
+
+    g_activeAnimations += 1;
 
     float rawElapsedTime = this.getElapsedSeconds();
     if (rawElapsedTime >= this.nextInterval) {
@@ -237,10 +250,8 @@ class Interval extends AnimationBase {
     }
 
     if (rawElapsedTime >= this.duration) {
-      this._running = false;
-      if (_onCompleted != null) {
-        _onCompleted.run();
-      }
+      this.isRunning = false;
+      this.onCompleted();
     }
   }
 }
@@ -250,14 +261,14 @@ class Interval extends AnimationBase {
 //
 
 class Storyboard extends AnimationBase {
-  private ArrayList<StoryboardEvent> _events = new ArrayList();
+  private ArrayList<StoryboardEvent> events = new ArrayList();
 
   // calculates the duration of the storyboard, taken as the largest animation end time, plus
   // a small value to ensure all animations run to completion
   float getDuration() {
     float duration = 0.0f;
-    for (int i = 0; i < _events.size(); i++) {
-      StoryboardEvent event = _events.get(i);
+    for (int i = 0; i < events.size(); i++) {
+      StoryboardEvent event = events.get(i);
       duration = max(duration, event.endTime);
     }
 
@@ -265,53 +276,56 @@ class Storyboard extends AnimationBase {
   }
 
   Storyboard add(float startTime, AnimationBase anim) {
-    _events.add(new StoryboardEvent(anim, startTime));
+    events.add(new StoryboardEvent(anim, startTime));
     return this;
   }
 
   Storyboard then(AnimationBase anim) {
-    _events.add(new StoryboardEvent(anim, getDuration()));
+    events.add(new StoryboardEvent(anim, getDuration()));
     return this;
   }
 
   Storyboard then(float delay, AnimationBase anim) {
-    _events.add(new StoryboardEvent(anim, getDuration() + delay));
+    events.add(new StoryboardEvent(anim, getDuration() + delay));
     return this;
   }
 
   Storyboard with(AnimationBase anim) {
-    _events.add(new StoryboardEvent(anim, _events.get(_events.size() - 1).startTime));
+    events.add(new StoryboardEvent(anim, events.get(events.size() - 1).startTime));
     return this;
   }
-  
+
   Storyboard after(AnimationBase anim) {
-    var lastEvent =_events.get(_events.size() - 1);
-    _events.add(new StoryboardEvent(anim, lastEvent.endTime));
+    var lastEvent =events.get(events.size() - 1);
+    events.add(new StoryboardEvent(anim, lastEvent.endTime));
     return this;
   }
-  
+
   void stop() {
     super.stop();
-    for (int i = 0; i < _events.size(); i++) {
-      StoryboardEvent event = _events.get(i);
+    for (int i = 0; i < events.size(); i++) {
+      StoryboardEvent event = events.get(i);
       event.anim.stop();
     }
   }
 
   void reset() {
     super.reset();
-    for (int i = 0; i < _events.size(); i++) {
-      StoryboardEvent event = _events.get(i);
+    for (int i = 0; i < events.size(); i++) {
+      StoryboardEvent event = events.get(i);
       event.triggered = false;
+      event.anim.reset();
     }
   }
 
   void updateObject(float deltaTime) {
-    if (!this._running) return;
+    if (!this.isRunning) return;
+
+    g_activeAnimations += 1;
 
     float elapsedTime = this.getElapsedSeconds();
-    for (int i = 0; i < _events.size(); i++) {
-      StoryboardEvent event = _events.get(i);
+    for (int i = 0; i < events.size(); i++) {
+      StoryboardEvent event = events.get(i);
       if (!event.triggered && elapsedTime > event.startTime) {
         event.anim.setAnimationTimer(new StoryboardAnimationTimer(this, event.startTime));
         event.anim.begin(this);
@@ -321,10 +335,8 @@ class Storyboard extends AnimationBase {
 
     if (elapsedTime >= this.getDuration()) {
       // storyboard complete, todo: loops
-      this._running = false;
-      if (_onCompleted != null) {
-        _onCompleted.run();
-      }
+      this.isRunning = false;
+      this.onCompleted();
     }
   }
 

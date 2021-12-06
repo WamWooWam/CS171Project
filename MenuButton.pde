@@ -21,7 +21,7 @@ class MenuButton extends GameObject {
 
     arrow = createShape(TRIANGLE, 8, 8, 32, h / 2, 8, h - 8);
     arrow.setStrokeWeight(1);
-    arrow.setFill(color(255,255,255));
+    arrow.setFill(color(255, 255, 255));
     arrowAnimation = new Animation(-4, 4, 0.25f, -1, LoopMode.REVERSE, EASE_IN_OUT_SINE, (f) -> arrowX = f);
 
     pressAnimation = new Storyboard();
@@ -39,8 +39,7 @@ class MenuButton extends GameObject {
   }
 
   void updateObject(float deltaTime) {
-    _label.x = (w - _label.w) / 2;
-    _label.y = (h - _label.h - 8) / 2;
+    alignCentre(_label, w, h);
 
     if ((mouseX > _absoluteX && mouseX < _absoluteX + w) && (mouseY > _absoluteY && mouseY < _absoluteY + h)) {
       isMouseSelected = true;
@@ -52,9 +51,9 @@ class MenuButton extends GameObject {
   void drawObject() {
     _absoluteX = screenX(0, 0);
     _absoluteY = screenY(0, 0);
-    
+
     stroke(0, 0, 0);
-    strokeWeight(1); 
+    strokeWeight(1);
     fill(255, 255, 255);
 
     if (isSelected) {

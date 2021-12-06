@@ -5,6 +5,8 @@ abstract class Scene extends GameObject {
   public Scene() {
     super(0, 0, width, height);
   }
+
+  abstract void cleanup();
 }
 
 // this scene acts as a container scene for other scenes, enabling the transition between them
@@ -13,6 +15,14 @@ class MainScene extends Scene {
   private Scene currentScene;
   private Scene nextScene;
   private boolean isTransitioning;
+
+  private PauseOverlay pauseMenu;
+
+  public MainScene() {
+    pauseMenu = new PauseOverlay();
+    pauseMenu.setActive(false);
+    this.children.add(pauseMenu);
+  }
 
   void updateObject(float deltaTime) {
     if (nextScene != null) {
@@ -28,21 +38,15 @@ class MainScene extends Scene {
     }
 
     currentScene.draw();
-
-    if (DRAW_FRAME_RATE) {
-      noClip();
-      fill(0, 0, 0);
-      textFont(g_consolas32);
-      text(Float.toString(round(frameRate)) + "FPS", 16, 32);
-    }
   }
-  
+
   void goToScene(Scene scene) {
     nextScene = scene;
     if (currentScene != null) {
       if (isTransitioning) return;
 
       isTransitioning = true;
+
       Storyboard transitionStoryboard = new Storyboard();
       transitionStoryboard.add(0.0f, new Trigger(() -> nextScene.scale = 0.33f));
       transitionStoryboard.add(0.0f, new Animation(0, height, 0.5f, EASE_OUT_CUBIC, (f) -> currentScene.y = f));
@@ -55,7 +59,21 @@ class MainScene extends Scene {
     }
   }
 
+  void togglePause() {
+    if (currentScene.getPaused()) {
+      currentScene.setPaused(false);
+      pauseMenu.close();
+    } else {
+      currentScene.setPaused(true);
+      pauseMenu.open();
+    }
+  }
+
   void keyPressed() {
+    if (pauseMenu.getActive()) {
+      pauseMenu.keyPressed();
+    }
+
     // we only want to update the active scene
     if (!isTransitioning && currentScene != null) {
       currentScene.keyPressed();
@@ -64,8 +82,12 @@ class MainScene extends Scene {
 
   void cleanupScenes() {
     isTransitioning = false;
+    currentScene.cleanup();
     currentScene = nextScene;
     currentScene.scale = 1;
     nextScene = null;
+  }
+
+  void cleanup() {
   }
 }
