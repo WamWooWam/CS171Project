@@ -9,6 +9,8 @@ class ResultsScreen extends GameObject {
   Text mistakeBonusLabel;
   Text totalScoreLabel;
 
+  Text highScoreLabel;
+
   Text timeBonus;
   Text mistakeBonus;
   Text totalScore;
@@ -38,25 +40,30 @@ class ResultsScreen extends GameObject {
     this.overlayRect.fill = color(0, 0, 0, 1);
     this.children.add(overlayRect);
 
-    this.timeBonusLabel = new Text(400, 340, "TIME BONUS:", g_consolas48);
+    this.timeBonusLabel = new Text(400, 320, "TIME BONUS:", g_consolas48);
     this.timeBonusLabel.x = ((width - (this.timeBonusLabel.w * 2)) / 2) + 48;
     this.timeBonusLabel.fill = color(0, 0, 0, 1);
-    this.mistakeBonusLabel = new Text(400, 388, "MISTAKE BONUS:", g_consolas48);
+    this.mistakeBonusLabel = new Text(400, 368, "MISTAKE BONUS:", g_consolas48);
     this.mistakeBonusLabel.x = ((width - (this.mistakeBonusLabel.w * 2)) / 2) + 48;
     this.mistakeBonusLabel.fill = color(0, 0, 0, 1);
-    this.totalScoreLabel = new Text(400, 472, "SCORE:", g_consolas48);
+    this.totalScoreLabel = new Text(400, 452, "SCORE:", g_consolas48);
     this.totalScoreLabel.x =((width - (this.totalScoreLabel.w * 2)) / 2) + 48;
     this.totalScoreLabel.fill = color(0, 0, 0, 1);
+
+    this.highScoreLabel = new Text(400, 540, "NEW HIGH SCORE!", g_consolas48);
+    this.highScoreLabel.x = (width - (this.highScoreLabel.w)) / 2;
+    this.highScoreLabel.fill = color(0, 0, 0, 1);
 
     this.children.add(timeBonusLabel);
     this.children.add(mistakeBonusLabel);
     this.children.add(totalScoreLabel);
+    this.children.add(highScoreLabel);
 
-    this.timeBonus = new Text(400, 340, "0", g_consolas48);
+    this.timeBonus = new Text(400, 320, "0", g_consolas48);
     this.timeBonus.fill = color(0, 0, 0, 1);
-    this.mistakeBonus =new Text(400, 388, "0", g_consolas48);
+    this.mistakeBonus =new Text(400, 368, "0", g_consolas48);
     this.mistakeBonus.fill = color(0, 0, 0, 1);
-    this.totalScore = new Text(400, 472, "0", g_consolas48);
+    this.totalScore = new Text(400, 452, "0", g_consolas48);
     this.totalScore.fill = color(0, 0, 0, 1);
 
     this.children.add(timeBonus);
@@ -86,16 +93,21 @@ class ResultsScreen extends GameObject {
       this.animationComplete = true;
       this.scoreTallying = false;
     } else if (animationComplete) {
-      this.animation.stop();
-      var scene = new TitleScene();
-      scene.forceOpen();
-      g_mainScene.goToScene(scene);
+      this.exit();
     }
   }
 
-  void calculateScore() {
+  void exit() {
+    this.animation.stop();
+    var scene = new TitleScene();
+    scene.forceOpen();
+    g_mainScene.goToScene(scene);
+  }
+
+  int calculateScore() {
     timeBonusValue = (int)Math.ceil(gameState.remainingTime) * 100;
     mistakeBonusValue = (int)(MAX_MISTAKES - gameState.mistakes) * 1000;
+    return timeBonusValue + mistakeBonusValue;
   }
 
   Storyboard createCharacterWinMoveStoryboard() {
@@ -183,6 +195,14 @@ class ResultsScreen extends GameObject {
     return scoreTallyStoryboard;
   }
 
+  Storyboard createHighScoreStoryboard() {
+    var sb = new Storyboard()
+      .add(0.0f, new Animation(highScoreLabel.y + 16, highScoreLabel.y, 0.33, EASE_OUT_CUBIC, (f) -> highScoreLabel.y = f))
+      .with(new Animation(1, 255, 0.33, LINEAR, (f) -> highScoreLabel.fill = color(0, 0, 0, f)))
+      .with(new Trigger(() -> g_audio.playCue(8)));
+    return sb;
+  }
+
   Storyboard createWordRevealAnimation() {
     var sb = new Storyboard();
 
@@ -224,7 +244,11 @@ class ResultsScreen extends GameObject {
       this.children.add(character);
     }
 
-    this.calculateScore();
+    var totalScore = this.calculateScore();
+    var highScore = g_saveData.getHighScore(this.gameState.difficulty);
+    if (totalScore > highScore) {
+      g_saveData.setHighScore(this.gameState.difficulty, totalScore);
+    }
 
     animation = new Storyboard();
 
@@ -253,6 +277,12 @@ class ResultsScreen extends GameObject {
       .then(new Trigger(() -> this.animationComplete = true));
 
     endOfTally = animation.getDuration();
+
+    if (totalScore > highScore) {
+      animation.then(1f, this.createHighScoreStoryboard());
+    }
+
+    animation.then(5.0f, new Trigger(() -> this.exit()));
 
     // 0.5s after the scale, run an infinite sine loop
     animation.add(endOfAnim + 0.5f, this.createCharacterSineAnimation());
@@ -284,6 +314,8 @@ class ResultsScreen extends GameObject {
     animation.then(this.createWordRevealAnimation());
     animation.then(0.5f, this.createCharacterSineAnimation())
       .with(new Trigger(() -> this.animationComplete = true));
+
+    animation.then(5.0f, new Trigger(() -> this.exit()));
 
     animation.begin(this);
   }

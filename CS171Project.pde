@@ -10,15 +10,15 @@ void setup() {
 
   // load and measure the font Consolas at size 64pt.
   g_consolas32 = loadFont("font/Consolas-32.vlw");
-  
+
   g_consolas48 = loadFont("font/Consolas-48.vlw");
   textFont(g_consolas48);
-  g_consolas48CharWidth = textWidth('W');  
-  
+  g_consolas48CharWidth = textWidth('W');
+
   g_consolas56 = loadFont("font/Consolas-56.vlw");
   textFont(g_consolas56);
   g_consolas56CharWidth = textWidth('W');
-  
+
   g_consolas64 = loadFont("font/Consolas-64.vlw");
   textFont(g_consolas64);
   g_consolas64CharWidth = textWidth('W');
@@ -26,7 +26,7 @@ void setup() {
   g_consolas96 = loadFont("font/Consolas-96.vlw");
   textFont(g_consolas96);
   g_consolas96CharWidth = textWidth('W');
-  
+
   g_easyWords = new WordList("easy");
   g_normalWords = new WordList("normal");
   g_hardWords = new WordList("hard");
@@ -34,21 +34,23 @@ void setup() {
   g_mainScene = new MainScene();
   g_mainScene.goToScene(new TitleScene());
   g_LastFrame = System.nanoTime();
-  
+
+  g_saveData = new SaveData();
+
   frameRate(-1);
 }
 
 void draw() {
-  float dt = ((float)(System.nanoTime() - g_LastFrame) / NS_TO_SEC);  
+  float dt = ((float)(System.nanoTime() - g_LastFrame) / NS_TO_SEC);
   g_LastFrame = System.nanoTime();
-  
+
   g_audio.update(dt);
   g_mainScene.update(dt);
-  
+
   background(255, 255, 255);
-  
+
   g_mainScene.draw();
-  
+
   if (DRAW_AUDIO_DEBUG) {
     g_audio.draw();
   }

@@ -28,8 +28,19 @@ float g_consolas64CharWidth;
 PFont g_consolas96;
 float g_consolas96CharWidth;
 
+// java enums are stupid
+// based on: https://stackoverflow.com/questions/8157755/how-to-convert-enum-value-to-int
 enum Difficulty {
-  EASY, NORMAL, HARD, CUSTOM
+  EASY(0), NORMAL(1), HARD(2), CUSTOM(3);
+
+  private final int value;
+  private Difficulty(int value) {
+    this.value = value;
+  }
+
+  public int getValue() {
+    return value;
+  }
 }
 
 Difficulty getDifficulty(int i) {
@@ -37,3 +48,5 @@ Difficulty getDifficulty(int i) {
   // source: https://stackoverflow.com/questions/5878952/cast-int-to-enum-in-java
   return Difficulty.values()[i];
 }
+
+SaveData g_saveData;
