@@ -41,23 +41,10 @@ class GameSceneData {
     }
 
     // switch the music depending on game difficulty
-    switch(difficulty) {
-    case EASY:
-      this.bgm = 2;
-      break;
-    case NORMAL:
-      this.bgm = 3;
-      break;
-    case HARD:
-      this.bgm = 4;
-      break;
-    case CUSTOM:
-      this.bgm = 5;
-      break;
-    }
+    this.bgm = (int)random(2, 6);
 
     // https://youtu.be/TLVGmvmNitg?t=889
-    println(word);
+    // println(word);
 
     this.word = word;
     // this stores the word as it appears on the player's screen
@@ -97,9 +84,9 @@ class GameSceneData {
   void keyPressed(char keyChar) {
     if (state != GameState.PLAYING) return;
     keyChar = Character.toLowerCase(keyChar);
-  
+
     if (ALLOWED_CHARS.indexOf(keyChar) == -1 || this.usedCharacters.contains(keyChar)) return;
-  
+
     boolean flag = false;
     for (int i = 0; i < word.length(); i++) {
       if (wordCharacters[i] == keyChar) {
@@ -107,9 +94,9 @@ class GameSceneData {
         wordState[i] = keyChar;
       }
     }
-  
+
     this.usedCharacters.add(keyChar);
-  
+
     if (!flag) {
       mistakes = min(mistakes + 1, MAX_MISTAKES);
       if (mistakes == MAX_MISTAKES) {
@@ -199,7 +186,7 @@ class GameScene extends Scene {
     var sb = new Storyboard();
 
     sb.add(0.0f, new Trigger(() -> g_audio.playBgm(this.state.bgm, 0.5f)))
-      .add(1.0f, new Trigger(() -> ready.fill = color(0, 0, 0, 255)))
+      .then(1.0f, new Trigger(() -> ready.fill = color(0, 0, 0, 255)))
       .with(new Trigger(() -> g_audio.playCue(5)))
       .then(0.25f, new Animation(255, 1, 0.75f, LINEAR, (f) -> ready.fill = color(0, 0, 0, f)))
       .then(0.25f, new Trigger(() -> set.fill = color(0, 0, 0, 255)))

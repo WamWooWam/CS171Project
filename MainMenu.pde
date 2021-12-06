@@ -155,10 +155,11 @@ class MainMenuPage2 extends GameObject {
       
       menu.goToGame(Difficulty.CUSTOM, word);
     }
-
-    if ((key == ' ' || ALLOWED_CHARS.indexOf(key) != -1) && this.characters.size() < 22) {
+  
+    var keyChar = Character.toLowerCase(key);
+    if ((keyChar == ' ' || ALLOWED_CHARS.indexOf(keyChar) != -1) && this.characters.size() < 25) {
       var character = this.characters.get(this.characters.size() - 1);
-      character.character = key;
+      character.character = keyChar;
 
       this.addTerminatorChar();
       character.fill = color(0, 0, 0);

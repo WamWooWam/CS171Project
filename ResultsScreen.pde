@@ -18,8 +18,13 @@ class ResultsScreen extends GameObject {
   int totalScoreValue = 0;
 
   Text youLose;
-  boolean animationComplete;
   Storyboard animation;
+  boolean animationStarted;
+  boolean animationComplete;
+  boolean scoreTallying = false;
+
+  float endOfAnim;
+  float endOfTally;
 
   ResultsScreen(GameScene gameScene, GameSceneData gameState) {
     super(0, 0, width, height);
@@ -76,7 +81,11 @@ class ResultsScreen extends GameObject {
   }
 
   void keyPressed() {
-    if (animationComplete) {
+    if (scoreTallying) {
+      this.animation.seek(endOfTally - 0.1f);
+      this.animationComplete = true;
+      this.scoreTallying = false;
+    } else if (animationComplete) {
       this.animation.stop();
       var scene = new TitleScene();
       scene.forceOpen();
@@ -198,13 +207,13 @@ class ResultsScreen extends GameObject {
   // this is a trigger because it depends on values at a point in an animation
   Trigger createCharacterSineAnimation() {
     return new Trigger(() -> {
-      this.animation = new Storyboard();
+      var animation = new Storyboard();
       for (int i = 0; i < gameState.word.length(); i++) {
         var character = gameScene.characters[i];
-        this.animation.add(i * 0.05f, new Animation(character.y, character.y - 40, 1f, -1, LoopMode.REVERSE, EASE_IN_OUT_SINE, (f) -> character.y = f));
+        animation.add(i * 0.05f, new Animation(character.y, character.y - 40, 1f, -1, LoopMode.REVERSE, EASE_IN_OUT_SINE, (f) -> character.y = f));
       }
 
-      this.animation.begin(this);
+      animation.begin(this);
     }
     );
   }
@@ -225,7 +234,8 @@ class ResultsScreen extends GameObject {
     // mute music
     animation.add(0.0f, new Animation(1, 0, 0.3f, LINEAR, (f) -> g_audio.setVolume(f)));
     // play the jingle
-    animation.after(new Trigger(() -> g_audio.playBgm(0, 0.0f)));
+    animation.after(new Trigger(() -> g_audio.playBgm(0, 0.0f)))
+      .then(new Trigger(() -> this.animationStarted = true));
 
     // move characters into place
     animation.add(0.0f, this.createCharacterWinMoveStoryboard());
@@ -234,15 +244,18 @@ class ResultsScreen extends GameObject {
     animation.then(this.createCharacterScaleStoryboard());
 
     // store the time after this is done
-    var duration = animation.getDuration();
+    endOfAnim = animation.getDuration();
 
     // show and run the score tally
     animation.then(this.createScoreShowStoryboard());
     animation.then(0.5f, this.createScoreTallyStoryboard())
+      .with(new Trigger(() -> this.scoreTallying = true))
       .then(new Trigger(() -> this.animationComplete = true));
-    
+
+    endOfTally = animation.getDuration();
+
     // 0.5s after the scale, run an infinite sine loop
-    animation.add(duration + 0.5f, this.createCharacterSineAnimation());
+    animation.add(endOfAnim + 0.5f, this.createCharacterSineAnimation());
     animation.begin(this);
   }
 
@@ -266,8 +279,7 @@ class ResultsScreen extends GameObject {
     animation.add(0.0f, this.createCharacterLoseMoveStoryboard());
     animation.add(0.0f, new Storyboard()
       .add(0.0f, new Animation(-200, 125, 2.0f, EASE_OUT_BOUNCE, (f) -> youLose.y = f))
-      .add(0.0f, new Animation(1, 255, 0.25f, LINEAR, (f) -> youLose.fill = color(0, 0, 0, f)))
-      );
+      .add(0.0f, new Animation(1, 255, 0.25f, LINEAR, (f) -> youLose.fill = color(0, 0, 0, f))));
 
     animation.then(this.createWordRevealAnimation());
     animation.then(0.5f, this.createCharacterSineAnimation())

@@ -6,7 +6,7 @@ static final String ALLOWED_CHARS = "abcdefghijklmnopqrstuvwxyz";
 // debugging flags
 static final boolean DRAW_OBJECT_BOUNDS = false;
 static final boolean DRAW_AUDIO_DEBUG = false;
-static final boolean DRAW_FRAME_RATE = false;
+static final boolean DRAW_FRAME_RATE = true;
 
 MainScene g_mainScene;
 
