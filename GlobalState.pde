@@ -16,6 +16,7 @@ int g_objectDrawCount;
 MainScene g_mainScene;
 
 Audio g_audio;
+SaveData g_saveData;
 
 WordList g_easyWords;
 WordList g_normalWords;
@@ -68,5 +69,3 @@ void alignCentre(GameObject obj, float maxWidth, float maxHeight) {
   alignHorizontalCentre(obj, maxWidth);
   alignVerticalCentre(obj, maxHeight);
 }
-
-SaveData g_saveData;

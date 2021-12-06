@@ -14,17 +14,17 @@ void setup() {
   //g_audio.playBgm(0);
 
   // load and measure the font Consolas at bunch of sizes.
-  g_consolas24 = createFont("Consolas", 24, true);
+  g_consolas24 = createFont("consola.ttf", 24, true);
   g_consolas24CharWidth = measureFont(g_consolas24);
-  g_consolas32 = createFont("Consolas", 32, true);
+  g_consolas32 = createFont("consola.ttf", 32, true);
   g_consolas32CharWidth = measureFont(g_consolas32);
-  g_consolas48 = createFont("Consolas", 48, true);
+  g_consolas48 = createFont("consola.ttf", 48, true);
   g_consolas48CharWidth = measureFont(g_consolas48);
-  g_consolas56 = createFont("Consolas", 56, true);
+  g_consolas56 = createFont("consola.ttf", 56, true);
   g_consolas56CharWidth = measureFont(g_consolas56);
-  g_consolas64 = createFont("Consolas", 64, true);
+  g_consolas64 = createFont("consola.ttf", 64, true);
   g_consolas64CharWidth = measureFont(g_consolas64);
-  g_consolas96 = createFont("Consolas", 96, true);
+  g_consolas96 = createFont("consola.ttf", 96, true);
   g_consolas96CharWidth = measureFont(g_consolas96);
 
   g_easyWords = new WordList("easy");
