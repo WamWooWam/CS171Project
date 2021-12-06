@@ -1,0 +1,9 @@
+button_move
+button_press
+countdown
+result
+stage_clear
+ready
+go
+fail
+high_score
