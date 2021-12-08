@@ -1,14 +1,14 @@
 // this file contains global variables for the game, as well as some helpful functions used within it
-static final float NS_TO_SEC = 1000000000.0f;
-static final int MAX_MISTAKES = 10;
+static final double NS_TO_SEC = 1000000000.0f;
+static final int MAX_MISTAKES = 12;
 static final String ALLOWED_CHARS = "abcdefghijklmnopqrstuvwxyz";
 
 // debugging flags
 static final boolean DEBUG_OBJECT_BOUNDS = false;
 static final boolean DEBUG_FRAME_RATE = true;
-static final boolean DEBUG_OBJECT_COUNT = true;
-static final boolean DEBUG_AUDIO = true;
-static final boolean DEBUG_ANIMATION = true;
+static final boolean DEBUG_OBJECT_COUNT = false;
+static final boolean DEBUG_AUDIO = false;
+static final boolean DEBUG_ANIMATION = false;
 
 int g_objectUpdateCount;
 int g_objectDrawCount;

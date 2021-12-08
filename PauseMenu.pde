@@ -121,16 +121,10 @@ class PauseMenu extends GameObject {
   }
 
   void drawObject() {
-    imageMode(CENTER);
-    rectMode(CENTER);
-
     stroke(0, 0, 0);
     strokeWeight(1);
     fill(255, 255, 255);
-    rect(MENU_X - MENU_LEFT, MENU_HEIGHT / 2, MENU_WIDTH, this.currentHeight);
-    clip(MENU_X - MENU_LEFT, MENU_HEIGHT / 2, MENU_WIDTH, this.currentHeight);
-
-    rectMode(CORNER);
-    imageMode(CORNER);
+    rect(0, ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
+    clip(0, ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
   }
 }

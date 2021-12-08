@@ -59,6 +59,10 @@ class Background extends GameObject {
     for (int i = 0; i < squares.length; i++) {
       Square bgSquare = squares[i];
 
+      if (bgSquare.x < -50 || bgSquare.y < -50 || bgSquare.x > (width + 50) || bgSquare.y > (height + 50)) {
+        continue;
+      }
+
       // draw it
       pushMatrix();
       translate(bgSquare.x, bgSquare.y);
@@ -66,5 +70,7 @@ class Background extends GameObject {
       square(-25, -25, 50);
       popMatrix();
     }
+
+    noClip();
   }
 }

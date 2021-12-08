@@ -49,7 +49,7 @@ class MainScene extends Scene {
 
       Storyboard transitionStoryboard = new Storyboard();
       transitionStoryboard.add(0.0f, new Trigger(() -> nextScene.scale = 0.33f));
-      transitionStoryboard.add(0.0f, new Animation(0, height, 0.5f, EASE_OUT_CUBIC, (f) -> currentScene.y = f));
+      transitionStoryboard.add(0.0f, new Animation(0, height + 100, 0.5f, EASE_OUT_CUBIC, (f) -> currentScene.y = f));
       transitionStoryboard.add(0.0f, new Animation(0.33f, 1f, 1f, EASE_OUT_CUBIC, (f) -> nextScene.scale = f));
       transitionStoryboard.add(1.0f, new Trigger(() -> this.cleanupScenes()));
       transitionStoryboard.begin(this);

@@ -27,8 +27,10 @@ class Hangman extends GameObject {
     new DrawCommand(DRAW_LINE, 370, 260, 322, 292), // right arm
     new DrawCommand(DRAW_LINE, 370, 416, 434, 512), // left leg
     new DrawCommand(DRAW_LINE, 370, 416, 306, 512), // right leg
+    new DrawCommand(DRAW_CIRCLE, 355, 150, 5, 385, 150, 5), // eyes
+    new DrawCommand(DRAW_LINE, 350, 185, 395, 175), // mouth
   };
-  
+
   private GameSceneData state;
 
   public Hangman(GameSceneData state, float x, float y) {
@@ -47,14 +49,18 @@ class Hangman extends GameObject {
     for (int i = 0; i < state.mistakes + 1; i++) {
       DrawCommand command = drawCommands[i];
       if (command.command == DRAW_LINE) {
-        line(command.params[0], command.params[1], command.params[2], command.params[3]);
+        for (int j = 0; j < command.params.length / 4; j++) {
+          line(command.params[j * 4], command.params[(j * 4) + 1], command.params[(j * 4) + 2], command.params[(j * 4) + 3]);
+        }
       }
       if (command.command == DRAW_CIRCLE) {
-        circle(command.params[0], command.params[1], command.params[2]);
+        for (int j = 0; j < command.params.length / 3; j++) {
+          circle(command.params[j * 3], command.params[(j * 3) + 1], command.params[(j * 3) + 2]);
+        }
       }
     }
   }
-  
+
   void centerObject(GameObject obj) {
     obj.x = (width - obj.w) / 2;
     obj.y = (height - (obj.h * 2)) / 2;

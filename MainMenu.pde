@@ -36,6 +36,7 @@ class MainMenuPage1 extends GameObject {
   }
 
   void keyPressed() {
+    super.keyPressed();
     if (menu.state != MenuState.PAGE1) return;
     if (keyCode == UP) {
       selectedButton = selectedButton - 1;
@@ -92,7 +93,7 @@ class MainMenuPage2 extends GameObject {
 
     alignHorizontalCentre(customGame, w);
     alignHorizontalCentre(customGameExplain, w);
-    
+
     this.characters = new ArrayList<HangmanCharacter>();
     this.addTerminatorChar();
     this.layoutCharacters();
@@ -135,6 +136,7 @@ class MainMenuPage2 extends GameObject {
   }
 
   void keyPressed() {
+    super.keyPressed();
     if (menu.state != MenuState.PAGE2) return;
 
     if (keyCode == ESC) {
@@ -153,10 +155,11 @@ class MainMenuPage2 extends GameObject {
       for (int i = 0; i < this.characters.size() - 1; i++) {
         word += this.characters.get(i).character;
       }
-      
-      menu.goToGame(Difficulty.CUSTOM, word);
+
+      if (word.trim().length() > 3)
+        menu.goToGame(Difficulty.CUSTOM, word.trim());
     }
-  
+
     var keyChar = Character.toLowerCase(key);
     if ((keyChar == ' ' || ALLOWED_CHARS.indexOf(keyChar) != -1) && this.characters.size() < 25) {
       var character = this.characters.get(this.characters.size() - 1);
@@ -239,16 +242,10 @@ class MainMenu extends GameObject {
   }
 
   void drawObject() {
-    imageMode(CENTER);
-    rectMode(CENTER);
-
     stroke(0, 0, 0);
     strokeWeight(1);
     fill(255, 255, 255);
-    rect(MENU_X - MENU_LEFT, MENU_HEIGHT / 2, MENU_WIDTH, this.currentHeight);
-    clip(MENU_X - MENU_LEFT, MENU_HEIGHT / 2, MENU_WIDTH, this.currentHeight);
-
-    rectMode(CORNER);
-    imageMode(CORNER);
+    rect(0, ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
+    clip(0, ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
   }
 }

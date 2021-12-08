@@ -190,9 +190,9 @@ class ResultsScreen extends GameObject {
     var totalTime = max(timeBonusValue / 10000.0f, mistakeBonusValue / 10000.0f);
 
     var scoreTallyStoryboard = new Storyboard()
-      .add(0.0f, new Animation(timeBonusValue, 0, timeBonusValue / 10000.0f, LINEAR, (f) -> timeBonusValue = f.intValue()))
-      .add(0.0f, new Animation(mistakeBonusValue, 0, mistakeBonusValue / 10000.0f, LINEAR, (f) -> mistakeBonusValue = f.intValue()))
-      .add(0.0f, new Animation(0, timeBonusValue + mistakeBonusValue, totalTime, LINEAR, (f) -> totalScoreValue = f.intValue()))
+      .add(0.0f, new Animation(timeBonusValue, 0, timeBonusValue / 10000.0f, LINEAR, (f) -> timeBonusValue = (int)f))
+      .add(0.0f, new Animation(mistakeBonusValue, 0, mistakeBonusValue / 10000.0f, LINEAR, (f) -> mistakeBonusValue  = (int)f))
+      .add(0.0f, new Animation(0, timeBonusValue + mistakeBonusValue, totalTime, LINEAR, (f) -> totalScoreValue = (int)f))
       .add(0.0f, new Interval(0.033f, totalTime, () ->  g_audio.playCue(2)))
       .then(0.05f, new Trigger(() -> g_audio.playCue(3)));
 
@@ -272,7 +272,7 @@ class ResultsScreen extends GameObject {
     animation.then(this.createCharacterScaleStoryboard());
 
     // store the time after this is done
-    endOfAnim = animation.getDuration();
+    endOfAnim = (float)animation.getDuration();
 
     // show and run the score tally
     animation.then(this.createScoreShowStoryboard());
@@ -280,7 +280,7 @@ class ResultsScreen extends GameObject {
       .with(new Trigger(() -> this.scoreTallying = true))
       .then(new Trigger(() -> this.animationComplete = true));
 
-    endOfTally = animation.getDuration();
+    endOfTally = (float)animation.getDuration();
 
     if (totalScore > highScore) {
       animation.then(1f, this.createHighScoreStoryboard());

@@ -30,7 +30,7 @@ class TitleScene extends Scene {
 
     Storyboard titleTextStoryboard = titleText.getStoryboard();
 
-    titleTextDuration = titleTextStoryboard.getDuration();
+    titleTextDuration = (float)titleTextStoryboard.getDuration();
 
     titleSequence = new Storyboard()
       .add(0, titleTextStoryboard)
@@ -92,6 +92,7 @@ class TitleScene extends Scene {
   }
 
   void keyPressed() {
+
     super.keyPressed();
     if (state == TitleSceneState.TITLE_DROP) {
       // skip to the end of the title sequence
@@ -99,9 +100,6 @@ class TitleScene extends Scene {
     } else if (state == TitleSceneState.PRESS_START) {
       g_audio.playCue(1);
       startMenuOpening();
-    } else if (state == TitleSceneState.MENU_OPENING) {
-      // skip to the end of the menu sequence
-      menuOpeningSequence.seek(menuOpeningSequence.getDuration() - 0.05f);
     }
   }
   

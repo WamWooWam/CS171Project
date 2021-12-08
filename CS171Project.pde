@@ -9,6 +9,7 @@ float measureFont(PFont font) {
 void setup() {
   size(1280, 720);
   pixelDensity(displayDensity());
+  smooth(8);
 
   g_audio = new Audio(this);
   //g_audio.playBgm(0);
@@ -46,11 +47,11 @@ void draw() {
   g_objectUpdateCount = 0;
   g_activeAnimations = 0;
 
-  float dt = ((float)(System.nanoTime() - g_LastFrame) / NS_TO_SEC);
+  double dt = ((double)(System.nanoTime() - g_LastFrame) / NS_TO_SEC);
   g_LastFrame = System.nanoTime();
 
-  g_audio.update(dt);
-  g_mainScene.update(dt);
+  g_audio.update((float)dt);
+  g_mainScene.update((float)dt);
 
   background(255, 255, 255);
 
@@ -62,7 +63,7 @@ void draw() {
 
   if (DEBUG_FRAME_RATE) {
     text(nf(frameRate, 0, 2) + "FPS", 16, 24);
-    text(nf(dt * 1000, 0, 2) + "ms", 16, 48);
+    text(nf((float)dt * 1000, 0, 2) + "ms", 16, 48);
   }
 
   if (DEBUG_OBJECT_COUNT) {

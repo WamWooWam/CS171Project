@@ -25,8 +25,16 @@ enum LoopMode {
 //
 interface AnimationTimer {
   void start();
-  void seek(float time);
-  float getElapsedSeconds();
+  void seek(double time);
+  double getElapsedSeconds();
+}
+
+interface AnimationAction {
+  void action(float f); 
+}
+
+interface TriggerAction {
+  void action(); 
 }
 
 //.
@@ -47,11 +55,11 @@ class DefaultAnimationTimer implements AnimationTimer {
     this._startTime = System.nanoTime();
   }
 
-  void seek(float time) {
-    this._startTime = (System.nanoTime() - (long)(time * NS_TO_SEC));
+  void seek(double time) {
+    this._startTime = System.nanoTime() - (long)(time * NS_TO_SEC);
   }
 
-  public float getElapsedSeconds() {
+  public double getElapsedSeconds() {
     return (System.nanoTime() - this._startTime) / NS_TO_SEC;
   }
 }
@@ -70,7 +78,7 @@ abstract class AnimationBase extends GameObject {
     animationTimer = new DefaultAnimationTimer();
   }
 
-  abstract float getDuration();
+  abstract double getDuration();
 
   void reset() {
     if (attachedGameObject != null) {
@@ -100,11 +108,11 @@ abstract class AnimationBase extends GameObject {
     this.reset();
   }
 
-  void seek(float time) {
+  void seek(double time) {
     animationTimer.seek(time);
   }
 
-  float getElapsedSeconds() {
+  double getElapsedSeconds() {
     return animationTimer.getElapsedSeconds();
   }
 
@@ -116,26 +124,26 @@ abstract class AnimationBase extends GameObject {
 class Animation extends AnimationBase {
   float from;
   float to;
-  float duration;
+  double duration;
   Ease ease;
 
   int loops;
   LoopMode loopMode;
 
   // using a consumer and lambda makes setting properties every frame significantly simpler
-  Consumer<Float> action;
+  AnimationAction action;
 
   private int completedLoops = 0;
 
-  public Animation(float from, float to, float duration, Consumer<Float> action) {
+  public Animation(float from, float to, double duration, AnimationAction action) {
     this(from, to, duration, LINEAR, action);
   }
 
-  public Animation(float from, float to, float duration, Ease ease, Consumer<Float> action) {
+  public Animation(float from, float to, double duration, Ease ease, AnimationAction action) {
     this(from, to, duration, 1, LoopMode.RESTART, ease, action);
   }
 
-  public Animation(float from, float to, float duration, int loops, LoopMode loopMode, Ease ease, Consumer<Float> action) {
+  public Animation(float from, float to, double duration, int loops, LoopMode loopMode, Ease ease, AnimationAction action) {
     super();
 
     this.from = from;
@@ -147,7 +155,7 @@ class Animation extends AnimationBase {
     this.action = action;
   }
 
-  float getDuration() {
+  double getDuration() {
     // negative loops run forever.
     if (this.loops < 0) return Float.POSITIVE_INFINITY;
 
@@ -164,17 +172,17 @@ class Animation extends AnimationBase {
 
     g_activeAnimations += 1;
 
-    float rawElapsedTime = this.getElapsedSeconds() - (completedLoops * duration);
-    float elapsedTime = min(rawElapsedTime, this.duration);
+    double rawElapsedTime = this.getElapsedSeconds() - (completedLoops * duration);
+    double elapsedTime = Math.min(rawElapsedTime, this.duration);
 
-    float value = 0.0f;
+    double value = 0.0d;
     if (loopMode == LoopMode.REVERSE && (completedLoops % 2) != 0) {
       value = this.to + (this.from - this.to) * this.ease.ease(elapsedTime / this.duration);
     } else {
       value = this.from + (this.to - this.from) * this.ease.ease(elapsedTime / this.duration);
     }
 
-    action.accept(value);
+    action.action((float)value);
 
     if (rawElapsedTime >= this.duration) {
       completedLoops++;
@@ -192,13 +200,13 @@ class Animation extends AnimationBase {
 // event to be run at any point in a storyboard.
 //
 class Trigger extends AnimationBase {
-  private Runnable trigger;
+  private TriggerAction trigger;
 
-  public Trigger(Runnable trigger) {
+  public Trigger(TriggerAction trigger) {
     this.trigger = trigger;
   }
 
-  float getDuration() {
+  double getDuration() {
     return 0.01f;
   }
 
@@ -208,7 +216,7 @@ class Trigger extends AnimationBase {
     g_activeAnimations += 1;
 
     this.isRunning = false;
-    this.trigger.run();
+    this.trigger.action();
     this.onCompleted();
   }
 }
@@ -218,18 +226,18 @@ class Trigger extends AnimationBase {
 // a period of time
 //
 class Interval extends AnimationBase {
-  private float interval;
-  private float duration;
-  private Runnable trigger;
-
-  private float nextInterval = -1;
-  public Interval(float interval, float duration, Runnable trigger) {
+  private double interval;
+  private double nextInterval = -1;
+  private double duration;
+  private TriggerAction trigger;
+  
+  public Interval(double interval, double duration, TriggerAction trigger) {
     this.interval = interval;
     this.duration = duration;
     this.trigger = trigger;
   }
 
-  float getDuration() {
+  double getDuration() {
     return duration;
   }
 
@@ -243,9 +251,9 @@ class Interval extends AnimationBase {
 
     g_activeAnimations += 1;
 
-    float rawElapsedTime = this.getElapsedSeconds();
+    double rawElapsedTime = this.getElapsedSeconds();
     if (rawElapsedTime >= this.nextInterval) {
-      this.trigger.run();
+      this.trigger.action();
       this.nextInterval = rawElapsedTime + this.interval;
     }
 
@@ -265,17 +273,17 @@ class Storyboard extends AnimationBase {
 
   // calculates the duration of the storyboard, taken as the largest animation end time, plus
   // a small value to ensure all animations run to completion
-  float getDuration() {
-    float duration = 0.0f;
+  double getDuration() {
+    double duration = 0.0f;
     for (int i = 0; i < events.size(); i++) {
       StoryboardEvent event = events.get(i);
-      duration = max(duration, event.endTime);
+      duration = Math.max(duration, event.endTime);
     }
 
-    return duration + 0.01;
+    return duration;
   }
 
-  Storyboard add(float startTime, AnimationBase anim) {
+  Storyboard add(double startTime, AnimationBase anim) {
     events.add(new StoryboardEvent(anim, startTime));
     return this;
   }
@@ -301,6 +309,10 @@ class Storyboard extends AnimationBase {
     return this;
   }
 
+  void seek(double time) {
+    super.seek(time);    
+  }
+
   void stop() {
     super.stop();
     for (int i = 0; i < events.size(); i++) {
@@ -323,17 +335,17 @@ class Storyboard extends AnimationBase {
 
     g_activeAnimations += 1;
 
-    float elapsedTime = this.getElapsedSeconds();
+    double elapsedTime = this.getElapsedSeconds();
     for (int i = 0; i < events.size(); i++) {
       StoryboardEvent event = events.get(i);
       if (!event.triggered && elapsedTime > event.startTime) {
-        event.anim.setAnimationTimer(new StoryboardAnimationTimer(this, event.startTime));
+        event.anim.setAnimationTimer(new StoryboardAnimationTimer(this, event.startTime, event.endTime));
         event.anim.begin(this);
         event.triggered = true;
       }
     }
 
-    if (elapsedTime >= this.getDuration()) {
+    if (elapsedTime >= (this.getDuration() + 1.0f)) {
       // storyboard complete, todo: loops
       this.isRunning = false;
       this.onCompleted();
@@ -342,27 +354,29 @@ class Storyboard extends AnimationBase {
 
   private class StoryboardAnimationTimer implements AnimationTimer {
     private Storyboard storyboard;
-    private float startTime;
+    private double startTime;
+    private double endTime;
 
-    StoryboardAnimationTimer(Storyboard storyboard, float startTime) {
+    StoryboardAnimationTimer(Storyboard storyboard, double startTime, double endTime) {
       this.storyboard = storyboard;
       this.startTime = startTime;
+      this.endTime = endTime;
     }
 
     // animations inside storyboards can't seek or start themselves
     void start() {
     }
 
-    void seek(float time) {
+    void seek(double time) {
     }
 
-    public float getElapsedSeconds() {
-      return storyboard.getElapsedSeconds() - startTime;
+    public double getElapsedSeconds() {
+      return Math.max(0, Math.min(storyboard.getElapsedSeconds() - startTime, endTime - startTime));
     }
   }
 
   private class StoryboardEvent {
-    StoryboardEvent(AnimationBase anim, float startTime) {
+    StoryboardEvent(AnimationBase anim, double startTime) {
       this.anim = anim;
       this.startTime = startTime;
       this.endTime = startTime + anim.getDuration();
@@ -370,8 +384,8 @@ class Storyboard extends AnimationBase {
     }
 
     public AnimationBase anim;
-    public float startTime;
-    public float endTime;
+    public double startTime;
+    public double endTime;
     public boolean triggered;
   }
 }

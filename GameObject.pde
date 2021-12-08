@@ -67,7 +67,7 @@ class GameObject implements Drawable {
     }
 
     g_objectUpdateCount++;
-    
+
     if (!hasAwoken) {
       awakeObject();
       hasAwoken = true;
@@ -85,9 +85,9 @@ class GameObject implements Drawable {
     if (!isActive) {
       return;
     }
-    
-    g_objectDrawCount++;
 
+    g_objectDrawCount++;
+    
     pushMatrix();
     translate(x, y);
 
@@ -105,7 +105,7 @@ class GameObject implements Drawable {
     if (strokeThickness != null)
       strokeWeight(strokeThickness);
 
-    translate(+w / 2, +h / 2);
+    translate(w / 2, h / 2);
     rotate(radians(rot));
     scale(scale);
     translate(-w / 2, -h / 2);
