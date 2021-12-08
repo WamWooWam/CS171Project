@@ -93,9 +93,20 @@ class Audio {
   }
 
   void draw(int start) {
+    if (!audioInitialised) return;
+
     text("main_volume: " + this.playingBgm.getVolume(), 16, start + 24);
-    text("fade_time: " + this.fadeTime, 16, start + 48);
-    text("fade_time_total: " + this.fadeDuration, 16, start + 72);
+
+    if (this.playingBgm != null) {
+      text("current_bgm: " + this.playingBgm.id, 16, start + 48);
+      text("bgm_pos: " + this.playingBgm.getPosition(), 16, start + 72);
+    }
+
+    if (this.nextBgm != null) {
+      text("next_bgm: " + this.nextBgm.id, 16, start + 96);
+      text("fade_time: " + this.fadeTime, 16, start + 120);
+      text("fade_time_total: " + this.fadeDuration, 16, start + 144);
+    }
   }
 
   private void setVolume(AudioSample sample, float sfxVolume) {
@@ -137,6 +148,10 @@ class Audio {
       }
 
       return 1;
+    }
+
+    int getPosition () {
+      return player.position();
     }
 
     void setVolume(float volume) {

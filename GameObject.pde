@@ -56,7 +56,7 @@ class GameObject implements Drawable {
     this.h = height;
     this.scale = 1;
     this.isActive = true;
-    this.children = new ArrayList<GameObject>();
+    this.children = new ArrayList<>();
     this.fill = color(255, 255, 255);
     this.stroke = color(0, 0, 0);
   }
@@ -91,7 +91,7 @@ class GameObject implements Drawable {
     pushMatrix();
     translate(x, y);
 
-    if (DEBUG_OBJECT_BOUNDS) {
+    if (DEBUGGER && DEBUG_OBJECT_BOUNDS) {
       fill(255, 255, 255, 1);
       stroke(0, 0, 0);
       strokeWeight(1);

@@ -57,33 +57,59 @@ void draw() {
 
   g_mainScene.draw();
 
-  noClip();
-  fill(0, 0, 0);
-  textFont(g_consolas24);
+  if (DEBUGGER) {
+    noClip();
+    fill(0, 0, 0);
+    textFont(g_consolas24);
 
-  if (DEBUG_FRAME_RATE) {
-    text(nf(frameRate, 0, 2) + "FPS", 16, 24);
-    text(nf((float)dt * 1000, 0, 2) + "ms", 16, 48);
-  }
+    if (DEBUG_FRAME_RATE) {
+      text(nf(frameRate, 0, 2) + "FPS", 16, 24);
+      text(nf((float)dt * 1000, 0, 2) + "ms", 16, 48);
+    }
 
-  if (DEBUG_OBJECT_COUNT) {
-    text("object_draw: " + g_objectDrawCount, 16, 72);
-    text("object_update: " + g_objectUpdateCount, 16, 96);
-  }
+    if (DEBUG_OBJECT_COUNT) {
+      text("object_draw: " + g_objectDrawCount, 16, 72);
+      text("object_update: " + g_objectUpdateCount, 16, 96);
+    }
 
-  if (DEBUG_ANIMATION) {
-    text("active_animations: " + g_activeAnimations, 16, 120);
-    text("attached_animations: " + g_attachedAnimations, 16, 144);
-  }
+    if (DEBUG_ANIMATION) {
+      text("active_animations: " + g_activeAnimations, 16, 120);
+      text("attached_animations: " + g_attachedAnimations, 16, 144);
+    }
 
-  if (DEBUG_AUDIO) {
-    g_audio.draw(144);
+    if (DEBUG_AUDIO) {
+      g_audio.draw(144);
+    }
   }
 }
 
+boolean ctrlPressed;
 void keyPressed() {
   g_mainScene.keyPressed();
   if (keyCode == ESC) {
     key = 0; // hack to stop it closing the game
+  }
+  
+  if(keyCode == CONTROL) {
+    ctrlPressed = true;
+  }
+  
+  // ctrl-D
+  if (ctrlPressed && keyCode == 68) {
+    DEBUGGER = !DEBUGGER;
+  }
+
+  // ctrl-B
+  if (ctrlPressed && keyCode == 66) {
+    DEBUG_OBJECT_BOUNDS = !DEBUG_OBJECT_BOUNDS;
+  }
+  
+  
+  println(keyCode);
+}
+
+void keyReleased() {
+  if(keyCode == CONTROL) {
+    ctrlPressed = false;
   }
 }

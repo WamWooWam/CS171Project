@@ -4,11 +4,12 @@ static final int MAX_MISTAKES = 12;
 static final String ALLOWED_CHARS = "abcdefghijklmnopqrstuvwxyz";
 
 // debugging flags
-static final boolean DEBUG_OBJECT_BOUNDS = false;
+static boolean DEBUGGER = false;
+static boolean DEBUG_OBJECT_BOUNDS = false;
 static final boolean DEBUG_FRAME_RATE = true;
-static final boolean DEBUG_OBJECT_COUNT = false;
-static final boolean DEBUG_AUDIO = false;
-static final boolean DEBUG_ANIMATION = false;
+static final boolean DEBUG_OBJECT_COUNT = true;
+static final boolean DEBUG_AUDIO = true;
+static final boolean DEBUG_ANIMATION = true;
 
 int g_objectUpdateCount;
 int g_objectDrawCount;
