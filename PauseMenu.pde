@@ -24,29 +24,32 @@ class PauseOverlay extends GameObject {
     // to show the menu, fade in the background overlay, fade out the audio, and open the menu
     this.menuOpenAnimation = new Storyboard()
       .add(0.0f, new Animation(0, 256, 0.33f, EASE_OUT_CUBIC, (f) -> this.menu.currentHeight = f))
-      .with(new Animation(1, 64, 0.33f, LINEAR, (f) -> this.overlayRect.fill = color(0, 0, 0, f)))
-      .with(new Animation(1.0f, 0.5f, 0.33f, LINEAR, (f) -> g_audio.setVolume(f)));
+      .with(new Animation(1, 64, 0.33f, (f) -> this.overlayRect.fill = color(0, 0, 0, f)))
+      .with(new Animation(1.0f, 0.5f, 0.33f, (f) -> g_audio.setVolume(f)));
 
     // reverse this to close
     this.menuCloseAnimation = new Storyboard()
       .add(0.0f, new Animation(256, 0, 0.33f, EASE_OUT_CUBIC, (f) -> this.menu.currentHeight = f))
-      .with(new Animation(64, 1, 0.33f, LINEAR, (f) -> this.overlayRect.fill = color(0, 0, 0, f)))
-      .with(new Animation(0.5f, 1f, 0.33f, LINEAR, (f) -> g_audio.setVolume(f)))
+      .with(new Animation(64, 1, 0.33f, (f) -> this.overlayRect.fill = color(0, 0, 0, f)))
+      .with(new Animation(0.5f, 1f, 0.33f, (f) -> g_audio.setVolume(f)))
       .then(new Trigger(() -> this.setActive(false)));
 
     this.children.add(overlayRect);
     this.children.add(menu);
   }
-
+  
+  // shows the menu
   void open() {
     this.setActive(true);
     this.menuOpenAnimation.begin(this);
   }
 
+  // hides the menu
   void close() {
     this.menuCloseAnimation.begin(this);
   }
 
+  // ensures the selected button is always the first when open
   void awakeObject() {
     menu.selectedButton = 0;
   }

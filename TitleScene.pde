@@ -1,12 +1,12 @@
 
 enum TitleSceneState {
-  TITLE_DROP,
-    PRESS_START,
-    MENU_OPENING,
-    MENU_OPEN,
+  TITLE_DROP, PRESS_START, MENU_OPENING, MENU_OPEN,
 }
 
-
+//
+// this is the title scene, the first scene you see upon launching the game, it handles the intro sequence
+// and also selecting a difficulty.
+//
 class TitleScene extends Scene {
   private TitleSceneState state;
   private TitleText titleText;
@@ -18,26 +18,31 @@ class TitleScene extends Scene {
   private Storyboard menuOpeningSequence;
 
   public TitleScene() {
+    // add our particle field, simulated for 5 seconds
     this.children.add(new Background(5));
 
-    state = TitleSceneState.TITLE_DROP;
-    titleText = new TitleText(0, -100);
-    pressStartText = new Text(0, 380, "PRESS START!", g_consolas64, color(0, 0, 0, 1));
+    this.state = TitleSceneState.TITLE_DROP;
+
+    this.titleText = new TitleText(0, -100);
+    this.pressStartText = new Text(0, 380, "PRESS START!", g_consolas64, color(0, 0, 0, 1));
     alignHorizontalCentre(pressStartText, width);
 
-    mainMenu = new MainMenu(this);
-    mainMenu.setActive(false);
+    // create our menu
+    this.mainMenu = new MainMenu(this);
+    this.mainMenu.setActive(false);
 
-    Storyboard titleTextStoryboard = titleText.getStoryboard();
+    // get the title storyboard and store its duration
+    var titleTextStoryboard = titleText.getStoryboard();
+    this.titleTextDuration = (float)titleTextStoryboard.getDuration();
 
-    titleTextDuration = (float)titleTextStoryboard.getDuration();
-
-    titleSequence = new Storyboard()
+    // create the title sequence storyboard
+    this.titleSequence = new Storyboard()
       .add(0, titleTextStoryboard)
       .then(new Trigger(() -> startPressStart()))
       .then(new Animation(1, 254, 0.5f, -1, LoopMode.REVERSE, EASE_IN_OUT_SINE, (f) -> pressStartText.fill = color(0, 0, 0, f)));
 
-    menuOpeningSequence = new Storyboard()
+    // create a storyboard for opening the menu
+    this.menuOpeningSequence = new Storyboard()
       .add(0.0f, new Animation(-100, -320, 0.5f, EASE_OUT_CUBIC, (f) -> titleText.y = f))
       .then(new Trigger(() -> mainMenu.setActive(true)))
       .with(mainMenu.getOpenAnimation());
@@ -46,44 +51,40 @@ class TitleScene extends Scene {
     this.children.add(pressStartText);
     this.children.add(mainMenu);
   }
-  
+
   void awakeObject() {
     if (this.state == TitleSceneState.TITLE_DROP) {
-      this.startTitleDrop(); 
+      this.startTitleDrop();
     }
-    
+
     g_audio.playBgm(6, 0.5f);
   }
 
+  // begins the title drop sequence
   void startTitleDrop() {
-    state = TitleSceneState.TITLE_DROP;
-    titleSequence.begin(this);
+    this.state = TitleSceneState.TITLE_DROP;
+    this.titleSequence.begin(this);
   }
 
+  // begins the press start sequence
   void startPressStart() {
-    state = TitleSceneState.PRESS_START;
+    this.state = TitleSceneState.PRESS_START;
   }
 
+  // opens the main menu
   void startMenuOpening() {
-    state = TitleSceneState.MENU_OPENING;
-    pressStartText.setActive(false);
-    menuOpeningSequence.begin(this);
+    this.state = TitleSceneState.MENU_OPENING;
+    this.pressStartText.setActive(false);
+    this.menuOpeningSequence.begin(this);
   }
-
+  
+  // tells the game that the main menu is open
   void startMenuOpen() {
-    state = TitleSceneState.MENU_OPEN;
+    this.state = TitleSceneState.MENU_OPEN;
   }
 
   void goToGame(Difficulty difficulty, String word) {
     g_mainScene.goToScene(new GameScene(new GameSceneData(word, difficulty)));
-  }
-
-  void drawObject() {
-    noStroke();
-    fill(255, 255, 255);
-    clip(0, 0, w, h);
-    rect(0, 0, w, h);
-    stroke(1);
   }
 
   void forceOpen() {
@@ -99,10 +100,10 @@ class TitleScene extends Scene {
       g_audio.playCue(1);
       startMenuOpening();
     }
-    
+
     return false;
   }
-  
+
   void cleanup() {
     titleSequence.stop();
     menuOpeningSequence.stop();

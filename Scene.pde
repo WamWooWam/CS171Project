@@ -1,5 +1,5 @@
 
-// this is the base class for the game's "scenes". scenes encapsulate the overall
+// this is the base class for the game's "scenes". scenes encapsulate a completely distinct
 // game state
 abstract class Scene extends GameObject {
   public Scene() {
@@ -18,9 +18,6 @@ class MainScene extends Scene {
 
   private PauseOverlay pauseMenu;
 
-  public MainScene() {
-  }
-
   // the pause menu depends on fonts we don't load instantly, so we have to do this later
   void lateInit() {
     pauseMenu = new PauseOverlay();
@@ -29,20 +26,22 @@ class MainScene extends Scene {
   }
 
   void updateObject(float deltaTime) {
+    // update our next and current scenes
     if (nextScene != null) {
       nextScene.update(deltaTime);
     }
-
     if (currentScene != null) {
       currentScene.update(deltaTime);
     }
   }
 
   void drawObject() {
+    // if the next scene exists draw it
     if (nextScene != null) {
       nextScene.draw();
     }
 
+    // if the current scene exists, draw it
     if (currentScene != null) {
       currentScene.draw();
     } else {
@@ -56,25 +55,41 @@ class MainScene extends Scene {
     }
   }
 
+  // transition to another scene
   void goToScene(Scene scene) {
+    // initialise our next scene
     nextScene = scene;
+    
+    // if we're already on a scene
     if (currentScene != null) {
       if (isTransitioning) return;
 
       isTransitioning = true;
-
-      Storyboard transitionStoryboard = new Storyboard();
+      
+      // animate the scale and position of our scenes to transition between them
+      var transitionStoryboard = new Storyboard();
       transitionStoryboard.add(0.0f, new Trigger(() -> nextScene.scale = 0.33f));
       transitionStoryboard.add(0.0f, new Animation(0, height + 100, 0.5f, EASE_OUT_CUBIC, (f) -> currentScene.y = f));
       transitionStoryboard.add(0.0f, new Animation(0.33f, 1f, 1f, EASE_OUT_CUBIC, (f) -> nextScene.scale = f));
       transitionStoryboard.add(1.0f, new Trigger(() -> this.cleanupScenes()));
       transitionStoryboard.begin(this);
     } else {
+      // otherwise just skip to it
       currentScene = scene;
       nextScene = null;
     }
   }
+  
+  // cleanup scenes once a transition is complete
+  private void cleanupScenes() {
+    isTransitioning = false;
+    currentScene.cleanup();
+    currentScene = nextScene;
+    currentScene.scale = 1;
+    nextScene = null;
+  }
 
+  // toggles the pause menu
   void togglePause() {
     if (currentScene.getPaused()) {
       currentScene.setPaused(false);
@@ -90,22 +105,14 @@ class MainScene extends Scene {
       pauseMenu.keyPressed();
     }
 
-    // we only want to update the active scene
+    // we only want to give key events to the active scene
     if (!isTransitioning && currentScene != null) {
       currentScene.keyPressed();
     }
 
     return true;
   }
-
-  void cleanupScenes() {
-    isTransitioning = false;
-    currentScene.cleanup();
-    currentScene = nextScene;
-    currentScene.scale = 1;
-    nextScene = null;
-  }
-
+  
   void cleanup() {
   }
 }

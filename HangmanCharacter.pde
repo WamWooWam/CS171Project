@@ -15,18 +15,18 @@ class HangmanCharacter extends GameObject {
     this.font = font;
     this.character = character;
     this.fill = color(0, 0, 0);
-    
+
     textFont(font);
     w = textWidth("w");
-    h = 0;
-  }  
+    h = textAscent();
+  }
 
   void drawObject() {
     textFont(font);
-    
+
     if (character != 0)
-      text(character, 0, 0);
+      text(character, 0, this.h);
     if (character != ' ')
-      text('_', 0,0);
+      text('_', 0, this.h);
   }
 }

@@ -2,6 +2,7 @@
 static final double NS_TO_SEC = 1000000000.0f;
 static final int MAX_MISTAKES = 12;
 static final String ALLOWED_CHARS = "abcdefghijklmnopqrstuvwxyz";
+static final char[] TITLE_CHARS = { 'H', 0, 'n', 'g', 'm', 0, 'n', '!' };
 
 // debugging flags
 static boolean DEBUGGER = false;

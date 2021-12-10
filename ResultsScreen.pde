@@ -10,36 +10,35 @@ class ResultsScreen extends GameObject {
 
   private GameScene gameScene;
   private GameSceneData gameState;
-  Rectangle overlayRect;
+  private Rectangle overlayRect;
 
   // labels for the countdown
-  Text timeBonusLabel;
-  Text mistakeBonusLabel;
-  Text totalScoreLabel;
+  private Text timeBonusLabel;
+  private Text mistakeBonusLabel;
+  private Text totalScoreLabel;
 
-  // countdown values  
-  Text timeBonus;
-  Text mistakeBonus;
-  Text totalScore;
+  // countdown values
+  private Text timeBonus;
+  private Text mistakeBonus;
+  private Text totalScore;
 
-  int timeBonusValue = 0;
-  int mistakeBonusValue = 0;
-  int totalScoreValue = 0;
-  
+  private int timeBonusValue = 0;
+  private int mistakeBonusValue = 0;
+  private int totalScoreValue = 0;
+
   // "new high score" text
-  Text highScoreLabel;
+  private Text highScoreLabel;
 
   // "game over" text
-  Text youLose;
-  
-  Storyboard mainAnim;
-  
+  private Text youLose;
+
+  private Storyboard mainAnim;
+
   // these flags are used to help when skipping the animations
-  boolean animationStarted;
-  boolean animationComplete;
-  boolean scoreTallying = false;
-  float endOfAnim;
-  float endOfTally;
+  private boolean animationComplete;
+  private boolean scoreTallying = false;
+  private float endOfAnim;
+  private float endOfTally;
 
   ResultsScreen(GameScene gameScene, GameSceneData gameState) {
     super(0, 0, width, height);
@@ -53,10 +52,10 @@ class ResultsScreen extends GameObject {
     this.overlayRect.stroke = color(0, 0, 0, 1);
     this.overlayRect.fill = color(0, 0, 0, 1);
     this.children.add(overlayRect);
-    
+
     // the background particle field
     this.children.add(new Background(0));
-    
+
     // create and align the labels for bonuses and total score
     this.timeBonusLabel = new Text(400, 320, "TIME BONUS:", g_consolas48, color(0, 0, 0, 1));
     this.timeBonusLabel.x = ((width - (this.timeBonusLabel.w * 2)) / 2) + 48;
@@ -111,7 +110,7 @@ class ResultsScreen extends GameObject {
     } else if (animationComplete) {
       this.exit();
     }
-    
+
     return false;
   }
 
@@ -139,6 +138,14 @@ class ResultsScreen extends GameObject {
     return timeBonusValue + mistakeBonusValue;
   }
 
+  float winCharacterTargetHeight() {
+    return 200;
+  }
+
+  float loseCharacterTargetHeight() {
+    return (height / 2) + 50;
+  }
+
   // returns a storyboard that moves the individual hangman characters to their proper position
   // in a win condition
   Storyboard createCharacterWinMoveStoryboard() {
@@ -153,7 +160,7 @@ class ResultsScreen extends GameObject {
 
       // this could look better with keyframe animations, but i'm not yet smart enough for that
       moveCharacters.add(i * spacing, new Animation(character.y, character.y - 300, 0.5f, EASE_IN_CUBIC, (f) -> character.y = f))
-        .add((i * spacing) + 0.5f, new Animation(character.y - 300, 250, 0.5f, EASE_OUT_CUBIC, (f) -> character.y = f));
+        .add((i * spacing) + 0.5f, new Animation(character.y - 300, winCharacterTargetHeight(), 0.5f, EASE_OUT_CUBIC, (f) -> character.y = f));
 
       moveCharacters.add(i * spacing, new Animation(1, 1.25, 1f, EASE_IN_OUT_CUBIC, (f) -> character.scale = f));
     }
@@ -165,14 +172,16 @@ class ResultsScreen extends GameObject {
   // in a lose condition
   Storyboard createCharacterLoseMoveStoryboard() {
     var moveCharacters = new Storyboard();
+
     var startX = (width - (gameState.word.length() * 48)) / 2;
     var spacing = 1.4f / gameState.word.length();
+    var targetY = loseCharacterTargetHeight();
 
     // move the characters to the results screen
     for (int i = 0; i < gameState.word.length(); i++) {
       var character = gameScene.characters[i];
       moveCharacters.add((i * spacing), new Animation(character.x, startX + (i * 48), 1f, EASE_IN_OUT_CUBIC, (f) -> character.x = f));
-      moveCharacters.add((i * spacing), new Animation(character.y, (height / 2) + 50, 1f, EASE_IN_OUT_CUBIC, (f) -> character.y = f));
+      moveCharacters.add((i * spacing), new Animation(character.y, targetY, 1f, EASE_IN_OUT_CUBIC, (f) -> character.y = f));
       moveCharacters.add((i * spacing), new Animation(1, 1.25, 1f, EASE_IN_OUT_CUBIC, (f) -> character.scale = f));
     }
 
@@ -202,17 +211,17 @@ class ResultsScreen extends GameObject {
 
     // animate the label and text up while fading in
     scoreStoryboard.add(0.5f, new Animation(timeBonusLabel.y + 16, timeBonusLabel.y, 0.33, EASE_OUT_CUBIC, (f) -> timeBonusLabel.y = f))
-      .with(new Animation(1, 255, 0.33, LINEAR, (f) -> timeBonusLabel.fill = color(0, 0, 0, f)))
+      .with(new Animation(1, 255, 0.33, (f) -> timeBonusLabel.fill = color(0, 0, 0, f)))
       .with(new Animation(timeBonus.y + 16, timeBonus.y, 0.34f, EASE_OUT_CUBIC, (f) -> timeBonus.y = f))
-      .with(new Animation(1, 255, 0.33, LINEAR, (f) -> timeBonus.fill = color(0, 0, 0, f)))
+      .with(new Animation(1, 255, 0.33, (f) -> timeBonus.fill = color(0, 0, 0, f)))
       .then(new Animation(mistakeBonusLabel.y + 16, mistakeBonusLabel.y, 0.33, EASE_OUT_CUBIC, (f) -> mistakeBonusLabel.y = f))
-      .with(new Animation(1, 255, 0.33, LINEAR, (f) -> mistakeBonusLabel.fill = color(0, 0, 0, f)))
+      .with(new Animation(1, 255, 0.33, (f) -> mistakeBonusLabel.fill = color(0, 0, 0, f)))
       .with(new Animation(mistakeBonus.y + 16, mistakeBonus.y, 0.33, EASE_OUT_CUBIC, (f) -> mistakeBonus.y = f))
-      .with(new Animation(1, 255, 0.33, LINEAR, (f) -> mistakeBonus.fill = color(0, 0, 0, f)))
+      .with(new Animation(1, 255, 0.33, (f) -> mistakeBonus.fill = color(0, 0, 0, f)))
       .then(new Animation(totalScoreLabel.y + 16, totalScoreLabel.y, 0.33, EASE_OUT_CUBIC, (f) -> totalScoreLabel.y = f))
-      .with(new Animation(1, 255, 0.33, LINEAR, (f) -> totalScoreLabel.fill = color(0, 0, 0, f)))
+      .with(new Animation(1, 255, 0.33, (f) -> totalScoreLabel.fill = color(0, 0, 0, f)))
       .with(new Animation(totalScore.y + 16, totalScore.y, 0.33, EASE_OUT_CUBIC, (f) -> totalScore.y = f))
-      .with(new Animation(1, 255, 0.33, LINEAR, (f) -> totalScore.fill = color(0, 0, 0, f)));
+      .with(new Animation(1, 255, 0.33, (f) -> totalScore.fill = color(0, 0, 0, f)));
 
     return scoreStoryboard;
   }
@@ -222,9 +231,9 @@ class ResultsScreen extends GameObject {
     var totalTime = max(timeBonusValue / 10000.0f, mistakeBonusValue / 10000.0f);
 
     var scoreTallyStoryboard = new Storyboard()
-      .add(0.0f, new Animation(timeBonusValue, 0, timeBonusValue / 10000.0f, LINEAR, (f) -> timeBonusValue = (int)f))
-      .add(0.0f, new Animation(mistakeBonusValue, 0, mistakeBonusValue / 10000.0f, LINEAR, (f) -> mistakeBonusValue  = (int)f))
-      .add(0.0f, new Animation(0, timeBonusValue + mistakeBonusValue, totalTime, LINEAR, (f) -> totalScoreValue = (int)f))
+      .add(0.0f, new Animation(timeBonusValue, 0, timeBonusValue / 10000.0f, (f) -> timeBonusValue = (int)f))
+      .add(0.0f, new Animation(mistakeBonusValue, 0, mistakeBonusValue / 10000.0f, (f) -> mistakeBonusValue  = (int)f))
+      .add(0.0f, new Animation(0, timeBonusValue + mistakeBonusValue, totalTime, (f) -> totalScoreValue = (int)f))
       .add(0.0f, new Interval(0.033f, totalTime, () ->  g_audio.playCue(2)))
       .then(0.05f, new Trigger(() -> g_audio.playCue(3)));
 
@@ -240,22 +249,34 @@ class ResultsScreen extends GameObject {
     return sb;
   }
 
+  // returns a storyboard that drops the "you lose" text down from the top of the screen
+  Storyboard createYouLoseTextAnimation() {
+    return new Storyboard()
+      .add(0.0f, new Animation(-200, 200, 2.0f, EASE_OUT_BOUNCE, (f) -> youLose.y = f))
+      .add(0.0f, new Animation(1, 255, 0.25f, LINEAR, (f) -> youLose.fill = color(0, 0, 0, f)));
+  }
+
   // returns a storyboard that reveals each missing letter of the word one by one
   Storyboard createWordRevealAnimation() {
     var sb = new Storyboard();
+    var targetY = loseCharacterTargetHeight();
 
     int x = 0;
     for (int i = 0; i < gameState.word.length(); i++) {
       var character = gameScene.characters[i];
       var letter = gameState.wordCharacters[i];
+      
+      // if the current letter was revealed, skip it
       if (gameState.wordState[i] != 0) continue;
-
-      var idx = i;
-      sb.add(x * 0.33f, new Animation((height / 2) + 50, (height / 2), 0.33f, EASE_IN_CIRCLE, (f) -> character.y = f))
-        .then(new Animation((height / 2), (height / 2) + 50, 0.33f, EASE_OUT_CIRCLE, (f) -> character.y = f))
+      var idx = i; // "must be effectively final"
+      
+      // bounce the character up by 50px, play a sound effect and reveal the letter, then move it down
+      sb.add(x * 0.33f, new Animation(targetY, targetY - 50, 0.33f, EASE_IN_CIRCLE, (f) -> character.y = f))
+        .then(new Animation(targetY - 50, targetY, 0.33f, EASE_OUT_CIRCLE, (f) -> character.y = f))
         .with(new Trigger(() -> g_audio.playCue(7)))
         .with(new Trigger(() -> gameState.wordState[idx] = letter));
 
+      // keep track of the total letters revealed for animation timing
       x++;
     }
 
@@ -290,9 +311,9 @@ class ResultsScreen extends GameObject {
 
     // mute music
     mainAnim.add(0.0f, new Animation(1, 0, 0.3f, LINEAR, (f) -> g_audio.setVolume(f)));
+
     // play the jingle
-    mainAnim.after(new Trigger(() -> g_audio.playBgm(0, 0.0f)))
-      .then(new Trigger(() -> this.animationStarted = true));
+    mainAnim.after(new Trigger(() -> g_audio.playBgm(0, 0.0f)));
 
     // move characters into place
     mainAnim.add(0.0f, this.createCharacterWinMoveStoryboard());
@@ -305,7 +326,7 @@ class ResultsScreen extends GameObject {
 
     // calculate the high score
     var totalScore = this.calculateScore();
-    
+
     // show and run the score tally
     mainAnim.then(this.createScoreShowStoryboard());
     mainAnim.then(0.5f, this.createScoreTallyStoryboard())
@@ -344,14 +365,13 @@ class ResultsScreen extends GameObject {
 
     // mute music
     mainAnim.add(0.0f, new Animation(1, 0, 0.3f, LINEAR, (f) -> g_audio.setVolume(f)));
+
     // play the jingle
     mainAnim.after(new Trigger(() -> g_audio.playBgm(1, 0.0f)));
 
     // move characters into place
     mainAnim.add(0.0f, this.createCharacterLoseMoveStoryboard());
-    mainAnim.add(0.0f, new Storyboard()
-      .add(0.0f, new Animation(-200, 125, 2.0f, EASE_OUT_BOUNCE, (f) -> youLose.y = f))
-      .add(0.0f, new Animation(1, 255, 0.25f, LINEAR, (f) -> youLose.fill = color(0, 0, 0, f))));
+    mainAnim.add(0.0f, this.createYouLoseTextAnimation());
 
     mainAnim.then(this.createWordRevealAnimation());
     mainAnim.then(0.5f, this.createCharacterSineAnimation())

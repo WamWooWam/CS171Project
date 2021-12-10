@@ -16,7 +16,7 @@ class GameTimer extends Text {
     int secs = remaining % 60;
     int mins = remaining / 60;
 
-    // https://stackoverflow.com/questions/473282/how-can-i-pad-an-integer-with-zeros-on-the-left
+    // sourced from: https://stackoverflow.com/questions/473282/how-can-i-pad-an-integer-with-zeros-on-the-left
     this.setText(mins + ":" + String.format("%02d", secs));
   }
 

@@ -22,6 +22,7 @@ class WordList {
     this.shuffle();
   }
 
+  // grabs the next item from the list
   public String next() {
     var item = words[idx];
     if (idx++ >= (words.length - 1)) {
@@ -32,6 +33,7 @@ class WordList {
     return item;
   }
 
+  // shuffles the list randomly
   // adapted from: https://stackoverflow.com/questions/273313/randomize-a-listt
   private void shuffle() {
     int n = words.length;

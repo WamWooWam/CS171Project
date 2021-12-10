@@ -5,49 +5,55 @@ import ddf.minim.*;
 // The audio class acts as a wrapper around Minim and facilitates the loading/playing of
 // sound effect cues and background music (bgm)
 //
+// I use Minim, as introduced in CS171 Topic 6, wrapped in my own implementation
+//
 class Audio {
-  
   // store our minim object
-  Minim minim;
-  
+  private Minim minim = null;
+
   // bgm and sfx are called by their index
-  AudioSample[] sfxCues;
-  BgmInfo[] bgm;
+  private final SoundCue[] sfxCues;
+  private final MusicTrack[] bgmTracks;
 
   // keep track of what's now playing to allow cross fading etc.
-  BgmInfo playingBgm;
-  BgmInfo nextBgm;
-  float fadeTime;
-  float fadeDuration;
+  private MusicTrack playingTrack;
+  private MusicTrack nextTrack;
+  private float fadeTime;
+  private float fadeDuration;
 
-  float maxVolume = 0.85f;
+  // maximum global volume
+  private float musicVolume = 0.85f;
+  private float soundEffectVolume = 0.90f;
 
   // minim sometimes doesn't init correctly, and in that case, we must manually disable audio.
-  boolean audioInitialised = false;
+  private boolean audioInitialised = false;
 
   public Audio(Object sketch) {
-    // load and allocate arrays for sound effects and background music
+    // to simplify adding new sound effects and music, we load a list from an external text file
+    // sound effects are listed one per line
     String[] soundEffects = loadStrings("sfx/sfx.txt");
-    sfxCues = new AudioSample[soundEffects.length];
+    sfxCues = new SoundCue[soundEffects.length];
 
+    // bgm.txt is a comma separated list formatted like:
+    // fileName,startSample,loopStartSample,loopEndSample
     String[] backgroundMusic = loadStrings("bgm/bgm.txt");
-    bgm = new BgmInfo[backgroundMusic.length];
+    bgmTracks = new MusicTrack[backgroundMusic.length];
 
     try {
       // init minim
       minim = new Minim(sketch);
 
-      // load sfx/bgm
+      // load each sound effect
       for (int i = 0; i < soundEffects.length; i++) {
-        sfxCues[i] = minim.loadSample("sfx/" + soundEffects[i] + ".wav");
-        this.setVolume(sfxCues[i], maxVolume);
+        sfxCues[i] = new SoundCue(soundEffects[i]);
       }
 
-      for (int i = 0; i <backgroundMusic.length; i++) {
-        String[] parts = splitTokens(backgroundMusic[i], ",");
-        bgm[i] = new BgmInfo(i, parts);
+      // load each music track
+      for (int i = 0; i < backgroundMusic.length; i++) {
+        bgmTracks[i] = new MusicTrack(i, backgroundMusic[i]);
       }
 
+      // we have audio playback!
       audioInitialised = true;
     }
     catch(Throwable t) {
@@ -55,7 +61,7 @@ class Audio {
       // i blame linux
     }
   }
-  
+
   // play a sound effect cue
   void playCue(int cue) {
     if (!audioInitialised) return;
@@ -63,20 +69,21 @@ class Audio {
   }
 
   // play background music
-  void playBgm(int bgm, float fadeTime) {
+  void playBgm(int track, float fadeTime) {
     if (!audioInitialised) return;
 
-    if (this.playingBgm != null) {
-      if (this.playingBgm.id == bgm) return;
+    if (this.playingTrack != null) {
+      // if we already have a track, and it's the same track, nwe have nothing to do
+      if (this.playingTrack.id == track) return;
 
-      this.nextBgm = this.bgm[bgm];
-      this.nextBgm.setVolume(0);
+      // otherwise, queue up the next track, and store the fade time
+      this.nextTrack = this.bgmTracks[track];
       this.fadeDuration = fadeTime;
       this.fadeTime = fadeTime;
     } else {
-      this.playingBgm = this.bgm[bgm];
-      this.playingBgm.setVolume(1);
-      this.playingBgm.play();
+      // if we don't, immediately start playing this track
+      this.playingTrack = this.bgmTracks[track];
+      this.playingTrack.play();
     }
   }
 
@@ -84,27 +91,40 @@ class Audio {
   void setVolume(float volume) {
     if (!audioInitialised) return;
 
-    if (this.playingBgm != null) {
-      this.playingBgm.setVolume(volume);
+    // if we have a track
+    if (this.playingTrack != null) {
+      // set its volume
+      this.playingTrack.setVolume(volume);
     }
   }
 
-  // this update loop handles fades between music tracks 
+  // this update loop handles fades between music tracks
   void update(float deltaTime) {
     if (!audioInitialised) return;
 
-    if (this.nextBgm != null) {
+    // if we have a queued track
+    if (this.nextTrack != null) {
+      // work out our current fade position
       this.fadeTime = max(0, this.fadeTime - deltaTime);
+
+      // if we have very little time left
       if (this.fadeTime < EPSILON) {
-        this.playingBgm.stop();
-        this.playingBgm = this.nextBgm;
-        this.playingBgm.setVolume(1);
-        this.playingBgm.play();
-        this.nextBgm = null;
+        // stop the current track
+        this.playingTrack.stop();
+
+        // play the next track
+        this.nextTrack.setVolume(1);
+        this.nextTrack.play();
+
+        // assign the next track to the current track, reset and return
+        this.playingTrack = this.nextTrack;
+        this.nextTrack = null;
         this.fadeTime = 0;
         return;
       }
-      this.playingBgm.setVolume(this.fadeTime / this.fadeDuration);
+
+      // otherwise, fade out the currently playing track
+      this.playingTrack.setVolume(this.fadeTime / this.fadeDuration);
     }
   }
 
@@ -112,35 +132,50 @@ class Audio {
   void draw(int start) {
     if (!audioInitialised) return;
 
-    if (this.playingBgm != null) {
-      text("main_volume: " + this.playingBgm.getVolume(), 16, start + 24);
-      text("current_bgm: " + this.playingBgm.id, 16, start + 48);
-      text("bgm_pos: " + this.playingBgm.getPosition(), 16, start + 72);
+    if (this.playingTrack != null) {
+      text("main_volume: " + this.playingTrack.getVolume(), 16, start + 24);
+      text("current_bgm: " + this.playingTrack.id, 16, start + 48);
+      text("bgm_pos: " + this.playingTrack.getPosition(), 16, start + 72);
     }
 
-    if (this.nextBgm != null) {
-      text("next_bgm: " + this.nextBgm.id, 16, start + 96);
+    if (this.nextTrack != null) {
+      text("next_bgm: " + this.nextTrack.id, 16, start + 96);
       text("fade_time: " + this.fadeTime, 16, start + 120);
       text("fade_time_total: " + this.fadeDuration, 16, start + 144);
     }
   }
 
-  // sets the volume of an audio sample.
-  // for some reason, minim calls this method deprecated, but doesn't seem to allow
-  // any other way to ensure a control exists on an object? maybe i'm blind, but this works
-  // so we can ignore these warnings for now.
-  private void setVolume(AudioSample sample, float sfxVolume) {
-    if (sample.hasControl(Controller.VOLUME)) {
-      sample.setVolume(sfxVolume);
-    } else if (sample.hasControl(Controller.GAIN)) {
-      sample.setGain(map(sfxVolume, 0.0, 1.0, -64, 0));
+  // this class holds information about a sound effect cue
+  private class SoundCue {
+    private AudioSample sample;
+
+    public SoundCue(String name) {
+      this.sample =  minim.loadSample("sfx/" + name + ".wav");
+      this.setVolume(1.0f);
+    }
+
+    void trigger() {
+      this.sample.trigger();
+    }
+
+    // sets the volume of an audio sample.
+    // for some reason, minim calls this method deprecated, but doesn't seem to allow
+    // any other way to ensure a control exists on an object? maybe i'm blind, but this works
+    // so we can ignore these warnings for now. ditto for everywhere else this appears
+    void setVolume(float volume) {
+      volume = map(volume, 0.0, 1.0, 0.0, soundEffectVolume);
+      if (this.sample.hasControl(Controller.VOLUME)) {
+        this.sample.setVolume(volume);
+      } else if (this.sample.hasControl(Controller.GAIN)) {
+        this.sample.setGain(map(volume, 0.0, 1.0, -64, 0));
+      }
     }
   }
 
   // this class holds information about a background music track
-  private class BgmInfo {
-    
+  private class MusicTrack {
     int id;
+
     private AudioPlayer player;
     private boolean shouldLoop;
     private int loopStartMs;
@@ -149,8 +184,10 @@ class Audio {
     // bgm.txt is a comma separated list formatted like:
     // fileName,startSample,loopStartSample,loopEndSample
     // i didn't end up needing startSample, so this skips over it
-    public BgmInfo(int id, String[] parts) {
+    public MusicTrack(int id, String line) {
       this.id = id;
+
+      String[] parts = splitTokens(line, ",");
       this.player = minim.loadFile("bgm/" + parts[0] + ".wav");
 
       float sampleRate = player.getFormat().getSampleRate() / 1000.0f; // samples/ms
@@ -162,6 +199,8 @@ class Audio {
       this.loopStartMs = (int)(loopStart / sampleRate);
       this.loopEndMs = (int)(loopEnd / sampleRate);
       this.shouldLoop = loopStartMs != loopEndMs;
+
+      this.setVolume(1.0f);
     }
 
     float getVolume() {
@@ -179,7 +218,7 @@ class Audio {
     }
 
     void setVolume(float volume) {
-      volume = map(volume, 0.0, 1.0, 0.0, maxVolume);
+      volume = map(volume, 0.0, 1.0, 0.0, musicVolume);
       if (player.hasControl(Controller.VOLUME)) {
         player.setVolume(volume);
       } else if (player.hasControl(Controller.GAIN)) {

@@ -4,15 +4,15 @@
 // the background visuals consist of a bunch of squares floating down the screen from top left to bottom right
 //
 class Background extends GameObject {
-
   // this internal class holds data about a particle instance
-  class Square {
+  private class Particle {
     float x;
     float y;
     float speed;
     float rotation;
 
-    public Square() {
+    public Particle() {
+      // randomly assign properties to this particle
       this.x = random(-width, width);
       this.y = random(-height, 0);
       this.rotation = random(360);
@@ -20,14 +20,19 @@ class Background extends GameObject {
     }
   }
 
-  Square[] squares;
+  Particle[] squares;
 
   public Background(float simulateTime) {
     super(0, 0, width, height);
+
+    this.fill = color(255, 255, 255);
+    this.stroke = color(192, 192, 192);
+    this.strokeThickness = 1;
+
     // create and initialise 100 squares.
-    squares = new Square[100];
+    squares = new Particle[100];
     for (int i = 0; i < squares.length; i++) {
-      squares[i] = new Square();
+      squares[i] = new Particle();
     }
     // simulate running for 5 seconds
     this.updateObject(simulateTime);
@@ -36,7 +41,7 @@ class Background extends GameObject {
   void updateObject(float deltaTime) {
     // run through each square
     for (int i = 0; i < squares.length; i++) {
-      Square bgSquare = squares[i];
+      Particle bgSquare = squares[i];
 
       // increment the square's position and rotation
       bgSquare.x += bgSquare.speed * deltaTime;
@@ -45,19 +50,15 @@ class Background extends GameObject {
 
       // if it's off the screen, replace this square with a new one
       if (bgSquare.x > (width + 50) || bgSquare.y > (height + 50)) {
-        squares[i] = new Square();
+        squares[i] = new Particle();
       }
     }
   }
 
   void drawObject() {
-    fill(255, 255, 255);
-    stroke(192, 192, 192);
-    strokeWeight(1);
-
     // run through each square
     for (int i = 0; i < squares.length; i++) {
-      Square bgSquare = squares[i];
+      Particle bgSquare = squares[i];
 
       // if it's off screen for whatever reason, skip drawing it
       if (bgSquare.x < -50 || bgSquare.y < -50 || bgSquare.x > (width + 50) || bgSquare.y > (height + 50)) {
@@ -68,7 +69,9 @@ class Background extends GameObject {
       pushMatrix();
       translate(bgSquare.x, bgSquare.y);
       rotate(radians(bgSquare.rotation));
+
       square(-25, -25, 50);
+
       popMatrix();
     }
   }

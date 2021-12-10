@@ -33,6 +33,8 @@ interface TriggerAction {
   void action();
 }
 
+// 
+// the animation timer is used by animations to calculate their current position relative to time
 //.
 // rather than using the frameCount, the default animation timer uses System.nanoTime, which returns a timestamp
 // in nanoseconds. this ensures the animation runs at a constant rate regardless of the actual framerate.
@@ -60,6 +62,9 @@ class DefaultAnimationTimer implements AnimationTimer {
   }
 }
 
+//
+// the base animation class stores properties and methods common to each animation type
+//
 abstract class AnimationBase extends GameObject {
   protected boolean isRunning = false;
 
@@ -69,26 +74,30 @@ abstract class AnimationBase extends GameObject {
     this.animationTimer = timer;
   }
 
-  AnimationBase() {
-    super(0, 0, 0, 0);
-    animationTimer = new DefaultAnimationTimer();
+  protected AnimationBase() {
+    super(0, 0, 0, 0); // an animation has no width/height/position
+    this.skipDraw = true;
+    this.animationTimer = new DefaultAnimationTimer();
   }
 
+  // animation types must provide their own duration 
   abstract double getDuration();
 
-  void reset() {
+  protected void reset() {
+    // detach ourselves from our parent
     if (attachedGameObject != null) {
-      g_attachedAnimations --;
+      g_attachedAnimations--;
       attachedGameObject.children.remove(this);
     }
 
     attachedGameObject = null;
   }
 
-  boolean getRunning() {
+  boolean running() {
     return this.isRunning;
   }
 
+  // starts an animation by attaching this object to a parent
   void begin(GameObject gameObject) {
     this.reset();
 
@@ -98,21 +107,25 @@ abstract class AnimationBase extends GameObject {
     this.attachedGameObject.children.add(this);
     g_attachedAnimations++;
   }
-
+  
+  // stops an animation and detaches it from the parent object
   void stop() {
     this.isRunning = false;
     this.reset();
   }
-
+  
+  // seeks an animation to a specific point in time
   void seek(double time) {
     animationTimer.seek(time);
   }
 
-  double getElapsedSeconds() {
+  // get the current animation time
+  protected double getElapsedSeconds() {
     return animationTimer.getElapsedSeconds();
   }
-
-  void onCompleted() {
+  
+  // function to be called when an animation finishes
+  protected void onCompleted() {
     this.reset();
   }
 }
@@ -133,6 +146,7 @@ class Animation extends AnimationBase {
 
   private int completedLoops = 0;
 
+  // declare a couple of convenience constructors for short linear animations
   public Animation(float from, float to, double duration, AnimationAction action) {
     this(from, to, duration, LINEAR, action);
   }
@@ -253,13 +267,19 @@ class Interval extends AnimationBase {
 
     g_activeAnimations += 1;
 
+    // get the current time
     double rawElapsedTime = this.getElapsedSeconds();
+    
+    // if the current time is greater than the next interval time, run the trigger
     if (rawElapsedTime >= this.nextInterval) {
       this.trigger.action();
+      // store our next interval time
       this.nextInterval = rawElapsedTime + this.interval;
     }
-
+    
+    // if the total time is greater than our duration
     if (rawElapsedTime >= this.duration) {
+      // stop the animation
       this.isRunning = false;
       this.onCompleted();
     }
@@ -272,7 +292,7 @@ class Interval extends AnimationBase {
 //
 
 class Storyboard extends AnimationBase {
-  private ArrayList<StoryboardEvent> events = new ArrayList();
+  private ArrayList<StoryboardEvent> events = new ArrayList<>();
 
   // calculates the duration of the storyboard, taken as the largest animation end time, plus
   // a small value to ensure all animations run to completion
@@ -327,6 +347,7 @@ class Storyboard extends AnimationBase {
 
   void stop() {
     super.stop();
+    // stop all children
     for (int i = 0; i < events.size(); i++) {
       StoryboardEvent event = events.get(i);
       event.anim.stop();
@@ -335,6 +356,7 @@ class Storyboard extends AnimationBase {
 
   void reset() {
     super.reset();
+    // stop reset children
     for (int i = 0; i < events.size(); i++) {
       StoryboardEvent event = events.get(i);
       event.triggered = false;
@@ -347,10 +369,15 @@ class Storyboard extends AnimationBase {
 
     g_activeAnimations += 1;
 
+    // get our total time and run through each event
     double elapsedTime = this.getElapsedSeconds();
     for (int i = 0; i < events.size(); i++) {
       StoryboardEvent event = events.get(i);
-      if (!event.triggered && elapsedTime > event.startTime) {
+      
+      // if the event has not been run already, and its starting time is greater than or
+      // equal to the current time, start the animation
+      if (!event.triggered && elapsedTime >= event.startTime) {
+        // set the animations timer to one that is parented to this storyboard
         event.anim.setAnimationTimer(new StoryboardAnimationTimer(this, event.startTime, event.endTime));
         event.anim.begin(this);
         event.triggered = true;
@@ -388,6 +415,7 @@ class Storyboard extends AnimationBase {
     }
   }
 
+  // this class stores an event within a storyboard
   private class StoryboardEvent {
     StoryboardEvent(AnimationBase anim, double startTime) {
       this.anim = anim;
