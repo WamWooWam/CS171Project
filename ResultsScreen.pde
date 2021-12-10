@@ -1,16 +1,23 @@
 
+//
+// this class handles the screen after the player either wins or loses. if the player wins,
+// they get a cheery animation in which the characters fly over the screen, congratulating them
+// on their victory. otherwise, they get an animation that shows the character they were missing
+// all before being sent back to the title screen to start the game again.
+//
+
 class ResultsScreen extends GameObject {
 
   private GameScene gameScene;
   private GameSceneData gameState;
   Rectangle overlayRect;
 
+  // labels for the countdown
   Text timeBonusLabel;
   Text mistakeBonusLabel;
   Text totalScoreLabel;
 
-  Text highScoreLabel;
-
+  // countdown values  
   Text timeBonus;
   Text mistakeBonus;
   Text totalScore;
@@ -18,13 +25,19 @@ class ResultsScreen extends GameObject {
   int timeBonusValue = 0;
   int mistakeBonusValue = 0;
   int totalScoreValue = 0;
+  
+  // "new high score" text
+  Text highScoreLabel;
 
+  // "game over" text
   Text youLose;
-  Storyboard animation;
+  
+  Storyboard mainAnim;
+  
+  // these flags are used to help when skipping the animations
   boolean animationStarted;
   boolean animationComplete;
   boolean scoreTallying = false;
-
   float endOfAnim;
   float endOfTally;
 
@@ -34,12 +47,17 @@ class ResultsScreen extends GameObject {
     this.gameScene = gameScene;
     this.gameState = gameState;
 
+    // an overlay to hide the game behind the screen
     this.overlayRect = new Rectangle(0, 0, width, height);
     this.overlayRect.strokeThickness = 0;
     this.overlayRect.stroke = color(0, 0, 0, 1);
     this.overlayRect.fill = color(0, 0, 0, 1);
     this.children.add(overlayRect);
-
+    
+    // the background particle field
+    this.children.add(new Background(0));
+    
+    // create and align the labels for bonuses and total score
     this.timeBonusLabel = new Text(400, 320, "TIME BONUS:", g_consolas48, color(0, 0, 0, 1));
     this.timeBonusLabel.x = ((width - (this.timeBonusLabel.w * 2)) / 2) + 48;
     this.mistakeBonusLabel = new Text(400, 368, "MISTAKE BONUS:", g_consolas48, color(0, 0, 0, 1));
@@ -66,6 +84,7 @@ class ResultsScreen extends GameObject {
     this.children.add(mistakeBonus);
     this.children.add(totalScore);
 
+    // create and align the "game over" text
     this.youLose = new Text(400, -200, "GAME OVER", g_consolas96, color(0, 0, 0, 1));
     alignHorizontalCentre(this.youLose, width);
 
@@ -73,6 +92,7 @@ class ResultsScreen extends GameObject {
   }
 
   void updateObject(float deltaTime) {
+    // ensure the bonus tallys are accurate and positioned correctly
     timeBonus.setText("" + timeBonusValue);
     mistakeBonus.setText("" + mistakeBonusValue);
     totalScore.setText("" + totalScoreValue);
@@ -82,18 +102,22 @@ class ResultsScreen extends GameObject {
     this.totalScore.x = width - this.totalScore.w - 396;
   }
 
-  void keyPressed() {
+  boolean onKeyPressed() {
     if (scoreTallying) {
-      this.animation.seek(endOfTally - 0.1f);
+      // skip if the player presses a key
+      this.mainAnim.seek(endOfTally - 0.1f);
       this.animationComplete = true;
       this.scoreTallying = false;
     } else if (animationComplete) {
       this.exit();
     }
+    
+    return false;
   }
 
   void exit() {
-    this.animation.stop();
+    // cleanup and return to the title screen
+    this.mainAnim.stop();
     var scene = new TitleScene();
     scene.forceOpen();
     g_mainScene.goToScene(scene);
@@ -109,11 +133,14 @@ class ResultsScreen extends GameObject {
   }
 
   int calculateScore() {
+    // calculates the players time/mistake bonus, and returns the total score
     timeBonusValue = (int)Math.ceil(gameState.remainingTime) * 100;
     mistakeBonusValue = (int)(MAX_MISTAKES - gameState.mistakes) * 1000;
     return timeBonusValue + mistakeBonusValue;
   }
 
+  // returns a storyboard that moves the individual hangman characters to their proper position
+  // in a win condition
   Storyboard createCharacterWinMoveStoryboard() {
     var moveCharacters = new Storyboard();
     var startX = (width - (gameState.word.length() * 48)) / 2;
@@ -134,6 +161,8 @@ class ResultsScreen extends GameObject {
     return moveCharacters;
   }
 
+  // returns a storyboard that moves the individual hangman characters to their proper position
+  // in a lose condition
   Storyboard createCharacterLoseMoveStoryboard() {
     var moveCharacters = new Storyboard();
     var startX = (width - (gameState.word.length() * 48)) / 2;
@@ -150,6 +179,7 @@ class ResultsScreen extends GameObject {
     return moveCharacters;
   }
 
+  // returns a storyboard that animates the character's scale and rotation to create a fanfare
   Storyboard createCharacterScaleStoryboard() {
     var scaleCharacters = new Storyboard();
     for (int i = 0; i < gameState.word.length(); i++) {
@@ -166,6 +196,7 @@ class ResultsScreen extends GameObject {
     return scaleCharacters;
   }
 
+  // returns a storyboard that shows the time/mistake/total score text
   Storyboard createScoreShowStoryboard() {
     var scoreStoryboard = new Storyboard();
 
@@ -186,6 +217,7 @@ class ResultsScreen extends GameObject {
     return scoreStoryboard;
   }
 
+  // returns a storyboard that performs the score tally
   Storyboard createScoreTallyStoryboard() {
     var totalTime = max(timeBonusValue / 10000.0f, mistakeBonusValue / 10000.0f);
 
@@ -199,6 +231,7 @@ class ResultsScreen extends GameObject {
     return scoreTallyStoryboard;
   }
 
+  // returns a storyboard that shows the "new high score" text
   Storyboard createHighScoreStoryboard() {
     var sb = new Storyboard()
       .add(0.0f, new Animation(highScoreLabel.y + 16, highScoreLabel.y, 0.33, EASE_OUT_CUBIC, (f) -> highScoreLabel.y = f))
@@ -207,6 +240,7 @@ class ResultsScreen extends GameObject {
     return sb;
   }
 
+  // returns a storyboard that reveals each missing letter of the word one by one
   Storyboard createWordRevealAnimation() {
     var sb = new Storyboard();
 
@@ -228,6 +262,7 @@ class ResultsScreen extends GameObject {
     return sb;
   }
 
+  // moves the characters up and down in a wave once they've reached their final positions
   // this is a trigger because it depends on values at a point in an animation
   Trigger createCharacterSineAnimation() {
     return new Trigger(() -> {
@@ -243,84 +278,87 @@ class ResultsScreen extends GameObject {
   }
 
   void showWin() {
+    // move all the characters to be children of this object, not the game scene
     for (HangmanCharacter character : gameScene.characters) {
       gameScene.children.remove(character);
       this.children.add(character);
     }
-
-    var totalScore = this.calculateScore();
-    var highScore = g_saveData.getHighScore(this.gameState.difficulty);
-    if (totalScore > highScore) {
-      g_saveData.setHighScore(this.gameState.difficulty, totalScore);
-    }
-
-    animation = new Storyboard();
+    mainAnim = new Storyboard();
 
     // fade the background to white
-    animation.add(0.0f, new Animation(1, 255, 1f, LINEAR, (f) -> overlayRect.fill = color(255, 255, 255, f)));
+    mainAnim.add(0.0f, new Animation(1, 255, 1f, LINEAR, (f) -> overlayRect.fill = color(255, 255, 255, f)));
 
     // mute music
-    animation.add(0.0f, new Animation(1, 0, 0.3f, LINEAR, (f) -> g_audio.setVolume(f)));
+    mainAnim.add(0.0f, new Animation(1, 0, 0.3f, LINEAR, (f) -> g_audio.setVolume(f)));
     // play the jingle
-    animation.after(new Trigger(() -> g_audio.playBgm(0, 0.0f)))
+    mainAnim.after(new Trigger(() -> g_audio.playBgm(0, 0.0f)))
       .then(new Trigger(() -> this.animationStarted = true));
 
     // move characters into place
-    animation.add(0.0f, this.createCharacterWinMoveStoryboard());
+    mainAnim.add(0.0f, this.createCharacterWinMoveStoryboard());
 
     // then scale them
-    animation.then(this.createCharacterScaleStoryboard());
+    mainAnim.then(this.createCharacterScaleStoryboard());
 
     // store the time after this is done
-    endOfAnim = (float)animation.getDuration();
+    endOfAnim = (float)mainAnim.getDuration();
 
+    // calculate the high score
+    var totalScore = this.calculateScore();
+    
     // show and run the score tally
-    animation.then(this.createScoreShowStoryboard());
-    animation.then(0.5f, this.createScoreTallyStoryboard())
+    mainAnim.then(this.createScoreShowStoryboard());
+    mainAnim.then(0.5f, this.createScoreTallyStoryboard())
       .with(new Trigger(() -> this.scoreTallying = true))
       .then(new Trigger(() -> this.animationComplete = true));
 
-    endOfTally = (float)animation.getDuration();
+    endOfTally = (float)mainAnim.getDuration();
 
+    // get the player's previous high score
+    var highScore = g_saveData.getHighScore(this.gameState.difficulty);
     if (totalScore > highScore) {
-      animation.then(1f, this.createHighScoreStoryboard());
+      // if this is a new high score, save it, and animate in the text
+      g_saveData.setHighScore(this.gameState.difficulty, totalScore);
+      mainAnim.then(1f, this.createHighScoreStoryboard());
     }
 
-    animation.then(5.0f, new Trigger(() -> this.exit()));
+    // after five seconds, leave the game
+    mainAnim.then(5.0f, new Trigger(() -> this.exit()));
 
     // 0.5s after the scale, run an infinite sine loop
-    animation.add(endOfAnim + 0.5f, this.createCharacterSineAnimation());
-    animation.begin(this);
+    mainAnim.add(endOfAnim + 0.5f, this.createCharacterSineAnimation());
+    mainAnim.begin(this);
   }
 
   void showLose() {
+    // move all the characters to be children of this object, not the game scene
     for (HangmanCharacter character : gameScene.characters) {
       gameScene.children.remove(character);
       this.children.add(character);
     }
 
-    animation = new Storyboard();
+    mainAnim = new Storyboard();
 
     // fade the background to white
-    animation.add(0.0f, new Animation(1, 255, 1f, LINEAR, (f) -> overlayRect.fill = color(255, 255, 255, f)));
+    mainAnim.add(0.0f, new Animation(1, 255, 1f, LINEAR, (f) -> overlayRect.fill = color(255, 255, 255, f)));
 
     // mute music
-    animation.add(0.0f, new Animation(1, 0, 0.3f, LINEAR, (f) -> g_audio.setVolume(f)));
+    mainAnim.add(0.0f, new Animation(1, 0, 0.3f, LINEAR, (f) -> g_audio.setVolume(f)));
     // play the jingle
-    animation.after(new Trigger(() -> g_audio.playBgm(1, 0.0f)));
+    mainAnim.after(new Trigger(() -> g_audio.playBgm(1, 0.0f)));
 
     // move characters into place
-    animation.add(0.0f, this.createCharacterLoseMoveStoryboard());
-    animation.add(0.0f, new Storyboard()
+    mainAnim.add(0.0f, this.createCharacterLoseMoveStoryboard());
+    mainAnim.add(0.0f, new Storyboard()
       .add(0.0f, new Animation(-200, 125, 2.0f, EASE_OUT_BOUNCE, (f) -> youLose.y = f))
       .add(0.0f, new Animation(1, 255, 0.25f, LINEAR, (f) -> youLose.fill = color(0, 0, 0, f))));
 
-    animation.then(this.createWordRevealAnimation());
-    animation.then(0.5f, this.createCharacterSineAnimation())
+    mainAnim.then(this.createWordRevealAnimation());
+    mainAnim.then(0.5f, this.createCharacterSineAnimation())
       .with(new Trigger(() -> this.animationComplete = true));
 
-    animation.then(5.0f, new Trigger(() -> this.exit()));
+    mainAnim.then(5.0f, new Trigger(() -> this.exit()));
 
-    animation.begin(this);
+    mainAnim.begin(this);
   }
 }

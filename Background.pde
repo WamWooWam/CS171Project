@@ -22,7 +22,7 @@ class Background extends GameObject {
 
   Square[] squares;
 
-  public Background() {
+  public Background(float simulateTime) {
     super(0, 0, width, height);
     // create and initialise 100 squares.
     squares = new Square[100];
@@ -30,7 +30,7 @@ class Background extends GameObject {
       squares[i] = new Square();
     }
     // simulate running for 5 seconds
-    this.updateObject(5);
+    this.updateObject(simulateTime);
   }
 
   void updateObject(float deltaTime) {
@@ -59,6 +59,7 @@ class Background extends GameObject {
     for (int i = 0; i < squares.length; i++) {
       Square bgSquare = squares[i];
 
+      // if it's off screen for whatever reason, skip drawing it
       if (bgSquare.x < -50 || bgSquare.y < -50 || bgSquare.x > (width + 50) || bgSquare.y > (height + 50)) {
         continue;
       }
@@ -70,7 +71,5 @@ class Background extends GameObject {
       square(-25, -25, 50);
       popMatrix();
     }
-
-    noClip();
   }
 }

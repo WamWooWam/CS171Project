@@ -1,6 +1,6 @@
 
 //
-// Displays a simple MM:SS timer
+// Displays a simple MM:SS countdown timer that can flash red when running out
 //
 class GameTimer extends Text {
   private GameSceneData state;
@@ -22,6 +22,7 @@ class GameTimer extends Text {
 
   void startBlinking() {
     if (blinkingAnimation == null) {
+      // creates an animation to blink the timer every second
       blinkingAnimation = new Animation(0, 255, 0.5f, -1, LoopMode.REVERSE, ROUND, (f) -> fill = color(f, 0, 0));
       blinkingAnimation.begin(this);
     }

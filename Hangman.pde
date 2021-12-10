@@ -1,4 +1,7 @@
 
+//
+// this object draws the actual hangman stick figure
+//
 class Hangman extends GameObject {
 
   private static final int DRAW_LINE = 0;

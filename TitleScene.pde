@@ -18,7 +18,7 @@ class TitleScene extends Scene {
   private Storyboard menuOpeningSequence;
 
   public TitleScene() {
-    this.children.add(new Background());
+    this.children.add(new Background(5));
 
     state = TitleSceneState.TITLE_DROP;
     titleText = new TitleText(0, -100);
@@ -91,9 +91,7 @@ class TitleScene extends Scene {
     this.startMenuOpening();
   }
 
-  void keyPressed() {
-
-    super.keyPressed();
+  boolean onKeyPressed() {
     if (state == TitleSceneState.TITLE_DROP) {
       // skip to the end of the title sequence
       titleSequence.seek(titleTextDuration - 0.05f);
@@ -101,6 +99,8 @@ class TitleScene extends Scene {
       g_audio.playCue(1);
       startMenuOpening();
     }
+    
+    return false;
   }
   
   void cleanup() {

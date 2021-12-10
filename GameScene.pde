@@ -1,28 +1,34 @@
 
 import java.util.*;
 
+//
+// This file contains the main implementation of the hangman game itself.
+//
+
 enum GameState {
   INTRO, PLAYING, WON, LOST, ENDED
 }
 
 class GameSceneData {
-  String word;
-  Difficulty difficulty;
+  String word; // the word in play
+  Difficulty difficulty; // the current difficulty
 
-  float totalTime;
-  float remainingTime;
+  float totalTime; // the total time the player has
+  float remainingTime; // the remaining time the player has
 
-  char[] wordState;
-  char[] wordCharacters;
-  ArrayList<Character> usedCharacters;
+  char[] wordState; // the current state of the word, any character that hasn't been found yet is '\0'
+  char[] wordCharacters; // the actual word, as an array
+  ArrayList<Character> usedCharacters; // a list of characters that have been played
 
-  int bgm = 2;
-  int mistakes = 0;
-  GameState state;
+  int bgm = 2; // the music track to play/playing
+  int mistakes = 0; // the current number of mistakes made by the player
+  GameState state; // the current game state (i.e. in play, won, lost, etc.)
 
   public GameSceneData(String word, Difficulty difficulty) {
     this.state = GameState.INTRO;
     this.difficulty = difficulty;
+
+    // if we dont have a word, get one from the list.
     if (word == null) {
       switch(difficulty) {
       case EASY:
@@ -51,9 +57,9 @@ class GameSceneData {
     // this stores the actual word
     this.wordCharacters = word.toCharArray();
     // this stores the set of characters that have already been played
-    this.usedCharacters = new ArrayList<Character>();
+    this.usedCharacters = new ArrayList<>();
 
-    // copy over any spaces in the word (we dont wanna include these)
+    // copy over any spaces in the word (we dont wanna play these)
     for (int i = 0; i < word.length(); i++) {
       if (wordCharacters[i] == ' ') {
         wordState[i] = ' ';
@@ -74,8 +80,9 @@ class GameSceneData {
 
   void update(float dt) {
     if (state == GameState.PLAYING) {
+      // keep track of if the player times out
       remainingTime = max(0, remainingTime - dt);
-      if (remainingTime == 0) {
+      if (remainingTime <= 0) {
         state = GameState.LOST;
       }
     }
@@ -88,10 +95,17 @@ class GameSceneData {
       g_mainScene.togglePause();
       state = GameState.INTRO;
     }
+    
+    if (g_ctrlPressed && keyCode == RIGHT) {
+      remainingTime -= 10;
+    }
 
     keyChar = Character.toLowerCase(keyChar);
+
+    // if the character is invalid or has been played already, continue
     if (ALLOWED_CHARS.indexOf(keyChar) == -1 || this.usedCharacters.contains(keyChar)) return;
 
+    // if the character is in the word, this flag is set, and the loop copies from the word into the current state
     boolean flag = false;
     for (int i = 0; i < word.length(); i++) {
       if (wordCharacters[i] == keyChar) {
@@ -100,74 +114,64 @@ class GameSceneData {
       }
     }
 
+    // keep track of used characters
     this.usedCharacters.add(keyChar);
 
-    if (!flag) {
-      mistakes = min(mistakes + 1, MAX_MISTAKES);
-      if (mistakes == MAX_MISTAKES) {
-        state = GameState.LOST;
-      }
-    } else {
+    // if the character was in the word
+    if (flag) {
+      // checks if the word is complete
       // turns out .equals checks nicely, including order, who knew
       if (Arrays.equals(wordCharacters, wordState)) {
         // you're winner
         state = GameState.WON;
       }
+    } else {
+      // otherwise, add a mistake
+      mistakes = min(mistakes + 1, MAX_MISTAKES);
+      if (mistakes == MAX_MISTAKES) {
+        state = GameState.LOST;
+      }
     }
   }
 }
 
+// maxmimum width for a word in play, used for layout
 static final int MAX_WORD_WIDTH = 700;
 
 class GameScene extends Scene {
-  GameSceneData state;
-  GameTimer timer;
+  GameSceneData state; // current game state
+  GameTimer timer; // the game timer object
 
-  Text ready;
-  Text set;
-  Text go;
+  // countdown text
+  Text ready; // ready text
+  Text set; // set text
+  Text go; // go text
 
-  Hangman hangman;
-  HangmanCharacter[] characters;
-  Storyboard characterAnimation;
+  Hangman hangman; // the hangman object
+  HangmanCharacter[] characters; // the characters in play
+  Storyboard characterAnimation; // the characters' wobble animation
 
-  Text[] usedCharacters;
+  Text[] usedCharacters; // the characters that have been used
 
-  ResultsScreen resultsScreen;
+  ResultsScreen resultsScreen; // the results screen
 
   public GameScene(GameSceneData data) {
-    state = data;
-    characters = new HangmanCharacter[state.word.length()];
+    this.state = data;
 
+    // create our timer
     this.timer = new GameTimer(this.state, 0, 16);
     this.children.add(timer);
 
-    hangman = new Hangman(this.state, 64, 64);
+    // create our hangman
+    this.hangman = new Hangman(this.state, 64, 64);
     this.children.add(hangman);
 
-    PFont font = g_consolas56;
-    int characterCount = state.word.length();
+    this.createCharacters();
 
-    float charWidth = g_consolas56CharWidth;
-    float charSpacing = min((MAX_WORD_WIDTH - ((charWidth) * characterCount)) / characterCount, 16);
-    float startY = (height - (charWidth * 2)) / 2;
-    float startX = 540 + (MAX_WORD_WIDTH - ((charWidth + charSpacing) * characterCount)) / 2;
-
-    characterAnimation = new Storyboard();
-
-    for (int i = 0; i < state.word.length(); i++) {
-      var character = new HangmanCharacter(startX + ((charWidth + charSpacing) * i), startY, state.wordState[i], font);
-      character.w = charWidth;
-      character.h = charWidth * 2;
-
-      this.children.add(characters[i] = character);
-
-      characterAnimation.add((i % 2) / 2.0f, new Animation(0, 10, 1f, -1, LoopMode.REVERSE, EASE_IN_OUT_SINE, (f) -> character.y = startY + f));
-    }
-
-    ready = new Text(0, 0, "Ready", g_consolas96, color(0, 0, 0, 1));
-    set = new Text(0, 0, "Set", g_consolas96, color(0, 0, 0, 1));
-    go = new Text(0, 0, "Go!", g_consolas96, color(0, 0, 0, 1));
+    // create and align the countdown text
+    this.ready = new Text(0, 0, "Ready", g_consolas96, color(0, 0, 0, 1));
+    this.set = new Text(0, 0, "Set", g_consolas96, color(0, 0, 0, 1));
+    this.go = new Text(0, 0, "Go!", g_consolas96, color(0, 0, 0, 1));
 
     alignCentre(ready, width, height - 64);
     alignCentre(set, width, height - 64);
@@ -179,9 +183,10 @@ class GameScene extends Scene {
 
     this.createUsedLetters();
 
-    resultsScreen = new ResultsScreen(this, state);
-    resultsScreen.setActive(false);
-    this.children.add(resultsScreen);
+    // create and hide the results screen
+    this.resultsScreen = new ResultsScreen(this, state);
+    this.resultsScreen.setActive(false);
+    this.children.add(this.resultsScreen);
   }
 
   void awakeObject() {
@@ -191,8 +196,8 @@ class GameScene extends Scene {
   void playIntro() {
     this.characterAnimation.stop();
 
+    // count down through "ready", "set", "go"
     var sb = new Storyboard();
-
     sb.add(0.0f, new Trigger(() -> g_audio.playBgm(this.state.bgm, 0.5f)))
       .then(1.0f, new Trigger(() -> ready.fill = color(0, 0, 0, 255)))
       .with(new Trigger(() -> g_audio.playCue(5)))
@@ -211,10 +216,14 @@ class GameScene extends Scene {
 
   void updateObject(float deltaTime) {
     if (wasPaused) {
+      // if we were paused, replay the intro
       playIntro();
     }
 
+    // update the game state
     this.state.update(deltaTime);
+
+    // reposition the timer
     this.timer.x = width - this.timer.w - 32;
 
     // if the player has 30 seconds left or less, warn them
@@ -228,51 +237,84 @@ class GameScene extends Scene {
       g_audio.playBgm(7, 0.5f);
     }
 
+    // update the characters from the word state
+    for (int i = 0; i < state.word.length(); i++) {
+      characters[i].character = state.wordState[i];
+    }
+
+    // update the used character view
     for (int i = 0; i < state.usedCharacters.size(); i++) {
-      if (state.word.indexOf(state.usedCharacters.get(i))== -1) {
-        var text = usedCharacters[i];
+      if (state.word.indexOf(state.usedCharacters.get(i)) == -1) {
+        var text = this.usedCharacters[i];
         text.setActive(true);
         text.setText("" + state.usedCharacters.get(i));
       }
     }
 
-    for (int i = 0; i < state.word.length(); i++) {
-      characters[i].character = state.wordState[i];
-    }
-
-    if (this.state.state == GameState.LOST) {
-      characterAnimation.stop();
-    }
-
+    // if the player has won
     if (this.state.state == GameState.WON) {
+      this.state.state = GameState.ENDED; // end the game
+
+      // show the results screen
       characterAnimation.stop();
       resultsScreen.setActive(true);
       resultsScreen.showWin();
-
-      this.state.state = GameState.ENDED;
     }
 
+    // if the player has lost
     if (this.state.state == GameState.LOST) {
+      this.state.state = GameState.ENDED; // end the game
+
+      // show the results screen
       characterAnimation.stop();
       resultsScreen.setActive(true);
       resultsScreen.showLose();
-
-      this.state.state = GameState.ENDED;
     }
   }
 
-  void keyPressed() {
-    super.keyPressed();
+  boolean onKeyPressed() {
     this.state.keyPressed(key);
+    return false;
   }
 
+  // creates and lays out the characters of the word in play
+  void createCharacters() {
+    characters = new HangmanCharacter[state.word.length()];
+
+    PFont font = g_consolas56;
+    int characterCount = state.word.length();
+
+    // the character width
+    float charWidth = g_consolas56CharWidth;
+    // space between each character, maximum 16px
+    float charSpacing = min((MAX_WORD_WIDTH - ((charWidth) * characterCount)) / characterCount, 16);
+
+    // y coordinate to start at
+    float startY = (height - (charWidth * 2)) / 2;
+    // x coordinate to start at
+    float startX = 540 + (MAX_WORD_WIDTH - ((charWidth + charSpacing) * characterCount)) / 2;
+
+    characterAnimation = new Storyboard();
+    for (int i = 0; i < state.word.length(); i++) {
+      var character = new HangmanCharacter(startX + ((charWidth + charSpacing) * i), startY, state.wordState[i], font);
+      character.w = charWidth;
+      character.h = charWidth * 2;
+
+      this.children.add(characters[i] = character);
+
+      // animate the letters moving up and down
+      characterAnimation.add((i % 2) / 2.0f, new Animation(0, 10, 1f, -1, LoopMode.REVERSE, EASE_IN_OUT_SINE, (f) -> character.y = startY + f));
+    }
+  }
+
+  // creates and randomly positions characters that aren't in play
   void createUsedLetters() {
     usedCharacters = new Text[26];
     for (int i = 0; i < usedCharacters.length; i++) {
       var flag = false;
       var text = new Text(0, 0, "", g_consolas32);
 
-      // this places each character until it intersects with the bounds of no others
+      // this places each character at random until it intersects with the bounds of no others
       do {
         text.x = random(720, 1120);
         text.y = random(400, 620);
@@ -295,18 +337,17 @@ class GameScene extends Scene {
       this.children.add(usedCharacters[i]);
     }
 
-    var storyboard = new Storyboard();
     for (int i = 0; i < usedCharacters.length; i++) {
       var character = usedCharacters[i];
-      storyboard.add(i * 0.05f, new Animation(random(-30, -15), random(15, 30), 1f, -1, LoopMode.REVERSE, EASE_IN_OUT_SINE, (f) -> character.rot = f));
+      characterAnimation.add(i * 0.05f, new Animation(random(-30, -15), random(15, 30), 1f, -1, LoopMode.REVERSE, EASE_IN_OUT_SINE, (f) -> character.rot = f));
     }
-
-    storyboard.begin(this);
   }
 
+  // cleans up after the scene
   void cleanup() {
     for (int i = 0; i < this.children.size(); i++) {
       GameObject child = this.children.get(i);
+      // if the child is an animation, stop it
       if (child instanceof AnimationBase) {
         ((AnimationBase)child).stop();
       }

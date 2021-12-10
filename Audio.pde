@@ -1,12 +1,20 @@
 
 import ddf.minim.*;
 
+//
+// The audio class acts as a wrapper around Minim and facilitates the loading/playing of
+// sound effect cues and background music (bgm)
+//
 class Audio {
+  
+  // store our minim object
   Minim minim;
+  
+  // bgm and sfx are called by their index
   AudioSample[] sfxCues;
-
   BgmInfo[] bgm;
 
+  // keep track of what's now playing to allow cross fading etc.
   BgmInfo playingBgm;
   BgmInfo nextBgm;
   float fadeTime;
@@ -14,9 +22,11 @@ class Audio {
 
   float maxVolume = 0.85f;
 
+  // minim sometimes doesn't init correctly, and in that case, we must manually disable audio.
   boolean audioInitialised = false;
 
   public Audio(Object sketch) {
+    // load and allocate arrays for sound effects and background music
     String[] soundEffects = loadStrings("sfx/sfx.txt");
     sfxCues = new AudioSample[soundEffects.length];
 
@@ -24,8 +34,10 @@ class Audio {
     bgm = new BgmInfo[backgroundMusic.length];
 
     try {
+      // init minim
       minim = new Minim(sketch);
 
+      // load sfx/bgm
       for (int i = 0; i < soundEffects.length; i++) {
         sfxCues[i] = minim.loadSample("sfx/" + soundEffects[i] + ".wav");
         this.setVolume(sfxCues[i], maxVolume);
@@ -43,12 +55,14 @@ class Audio {
       // i blame linux
     }
   }
-
+  
+  // play a sound effect cue
   void playCue(int cue) {
     if (!audioInitialised) return;
     sfxCues[cue].trigger();
   }
 
+  // play background music
   void playBgm(int bgm, float fadeTime) {
     if (!audioInitialised) return;
 
@@ -66,6 +80,7 @@ class Audio {
     }
   }
 
+  // set the current bgm volume, used for manual fades
   void setVolume(float volume) {
     if (!audioInitialised) return;
 
@@ -74,6 +89,7 @@ class Audio {
     }
   }
 
+  // this update loop handles fades between music tracks 
   void update(float deltaTime) {
     if (!audioInitialised) return;
 
@@ -92,12 +108,12 @@ class Audio {
     }
   }
 
+  // this draws the audio debugger
   void draw(int start) {
     if (!audioInitialised) return;
 
-    text("main_volume: " + this.playingBgm.getVolume(), 16, start + 24);
-
     if (this.playingBgm != null) {
+      text("main_volume: " + this.playingBgm.getVolume(), 16, start + 24);
       text("current_bgm: " + this.playingBgm.id, 16, start + 48);
       text("bgm_pos: " + this.playingBgm.getPosition(), 16, start + 72);
     }
@@ -109,22 +125,30 @@ class Audio {
     }
   }
 
+  // sets the volume of an audio sample.
+  // for some reason, minim calls this method deprecated, but doesn't seem to allow
+  // any other way to ensure a control exists on an object? maybe i'm blind, but this works
+  // so we can ignore these warnings for now.
   private void setVolume(AudioSample sample, float sfxVolume) {
-    if (sample.hasControl(AudioPlayer.VOLUME)) {
+    if (sample.hasControl(Controller.VOLUME)) {
       sample.setVolume(sfxVolume);
-    } else if (sample.hasControl(AudioPlayer.GAIN)) {
+    } else if (sample.hasControl(Controller.GAIN)) {
       sample.setGain(map(sfxVolume, 0.0, 1.0, -64, 0));
     }
   }
 
+  // this class holds information about a background music track
   private class BgmInfo {
+    
     int id;
-
     private AudioPlayer player;
     private boolean shouldLoop;
     private int loopStartMs;
     private int loopEndMs;
 
+    // bgm.txt is a comma separated list formatted like:
+    // fileName,startSample,loopStartSample,loopEndSample
+    // i didn't end up needing startSample, so this skips over it
     public BgmInfo(int id, String[] parts) {
       this.id = id;
       this.player = minim.loadFile("bgm/" + parts[0] + ".wav");
@@ -133,17 +157,17 @@ class Audio {
       int loopStart = int(parts[2]);
       int loopEnd = int(parts[3]);
 
+      // minim's loop points work in milliseconds not samples, so we approximate this
+      // using the sample rate
       this.loopStartMs = (int)(loopStart / sampleRate);
       this.loopEndMs = (int)(loopEnd / sampleRate);
       this.shouldLoop = loopStartMs != loopEndMs;
-
-      println(parts[0] + " loopStart: " + loopStartMs + " loopEnd: " + loopEndMs);
     }
 
     float getVolume() {
-      if (player.hasControl(AudioPlayer.VOLUME)) {
+      if (player.hasControl(Controller.VOLUME)) {
         return player.getVolume();
-      } else if (player.hasControl(AudioPlayer.GAIN)) {
+      } else if (player.hasControl(Controller.GAIN)) {
         return map(player.getGain(), -64, 0, 0, 1);
       }
 
@@ -156,15 +180,17 @@ class Audio {
 
     void setVolume(float volume) {
       volume = map(volume, 0.0, 1.0, 0.0, maxVolume);
-      if (player.hasControl(AudioPlayer.VOLUME)) {
+      if (player.hasControl(Controller.VOLUME)) {
         player.setVolume(volume);
-      } else if (player.hasControl(AudioPlayer.GAIN)) {
+      } else if (player.hasControl(Controller.GAIN)) {
         player.setGain(map(volume, 0.0, 1.0, -64, 0));
       }
     }
 
     void play() {
       if (shouldLoop) {
+        // if you start a song looping, *then* set its loop points, the song will play from 0
+        // allowing a proper introduction
         player.loop();
         player.setLoopPoints(loopStartMs, loopEndMs);
       } else {

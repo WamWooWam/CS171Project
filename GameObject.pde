@@ -68,6 +68,7 @@ class GameObject implements Drawable {
 
     g_objectUpdateCount++;
 
+    // keep track of and 
     if (!hasAwoken) {
       awakeObject();
       hasAwoken = true;
@@ -88,9 +89,24 @@ class GameObject implements Drawable {
 
     g_objectDrawCount++;
     
+    // push a matrix for this object
     pushMatrix();
+    
+    // translate to the x,y position of this object (this will be relative to the parent object)
     translate(x, y);
-
+    
+    // in order to apply rotations and scaling at the centre coordinate of the object, 
+    // we first move the translation matrix to the centre, then apply rotation and scaling
+    translate(w / 2, h / 2);
+    
+    // rotation is in degrees for simplicity 
+    rotate(radians(rot));
+    scale(scale);
+    
+    // then move back
+    translate(-w / 2, -h / 2);
+    
+    // draw the object bounds
     if (DEBUGGER && DEBUG_OBJECT_BOUNDS) {
       fill(255, 255, 255, 1);
       stroke(0, 0, 0);
@@ -98,6 +114,7 @@ class GameObject implements Drawable {
       rect(0, 0, w, h);
     }
 
+    // assign the object's fill/stroke/strokeWeight
     if (fill != null)
       fill(fill);
     if (stroke != null)
@@ -105,28 +122,44 @@ class GameObject implements Drawable {
     if (strokeThickness != null)
       strokeWeight(strokeThickness);
 
-    translate(w / 2, h / 2);
-    rotate(radians(rot));
-    scale(scale);
-    translate(-w / 2, -h / 2);
-
+    // execute the object's own draw function
     drawObject();
 
+    // then draw any children of this object
     for (GameObject child : children)
       child.draw();
-
+    
+    // then restore the transformation matrix to what it was before drawing this object
     popMatrix();
   }
 
-  void keyPressed() {
+  final void keyPressed() {
+    // allow this object's keypress handler to skip any child objects
+    if (this.onKeyPressed()) return;    
+    
+    // pass on any keyPress events to child objects
     for (int i = 0; i < children.size(); i++)
       children.get(i).keyPressed();
   }
 
-  void awakeObject() {
+  // these are methods to be implemented by the object to update, draw, handle events, etc.
+  
+  // awake is called before the first update loop
+  protected void awakeObject() {
   }
-  void updateObject(float deltaTime) {
+  
+  // update is called during the update loop and should handle creating/destroying new objects
+  // and changing object values
+  protected void updateObject(float deltaTime) {
   }
-  void drawObject() {
+  
+  // draw should be used to draw the object itself
+  protected void drawObject() {
+  }  
+  
+  // onKeyPressed allows objects to react to keyboard keys, if `true` is returned from this handler,
+  // we skip processing key events for child objects.
+  protected boolean onKeyPressed() { 
+    return false;
   }
 }

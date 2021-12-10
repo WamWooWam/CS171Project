@@ -1,13 +1,17 @@
 
 //
-// easing functions, all sourced from https://easings.net/
-// these functions take "time" between [0..1] and produce a value that indicates
-// the progress of an animation at that time.
+// easing functions, all sourced from https://easings.net/, then ported to java
 //
+// in the real world, no motion starts and stops instantly, there is always a period of
+// acceleration/deceleration 
+//
+// these functions take "time" between [0..1] and produce a value that indicates
+// the progress of an animation at that time, applying a specific acceleration curve
+//
+
 interface Ease {
   double ease(double t);
 }
-
 
 static Ease LINEAR = (time) -> time;
 static Ease ROUND = (time) -> Math.round(time);
@@ -27,17 +31,17 @@ static Ease EASE_IN_OUT_CIRCLE = (time) ->
   ? (1 - Math.sqrt(1 - Math.pow(2 * time, 2))) / 2
   : (Math.sqrt(1 - Math.pow(-2 * time + 2, 2)) + 1) / 2;
 
-static Ease EASE_OUT_BOUNCE = (x) -> {
+static Ease EASE_OUT_BOUNCE = (time) -> {
   final double n1 = 7.5625;
   final double d1 = 2.75;
 
-  if (x < 1 / d1) {
-    return n1 * x * x;
-  } else if (x < 2 / d1) {
-    return n1 * (x -= 1.5 / d1) * x + 0.75;
-  } else if (x < 2.5 / d1) {
-    return n1 * (x -= 2.25 / d1) * x + 0.9375;
+  if (time < 1 / d1) {
+    return n1 * time * time;
+  } else if (time < 2 / d1) {
+    return n1 * (time -= 1.5 / d1) * time + 0.75;
+  } else if (time < 2.5 / d1) {
+    return n1 * (time -= 2.25 / d1) * time + 0.9375;
   } else {
-    return n1 * (x -= 2.625 / d1) * x + 0.984375;
+    return n1 * (time -= 2.625 / d1) * time + 0.984375;
   }
 };

@@ -1,4 +1,7 @@
 
+//
+// this class draws a hangman character, that is either a space, an _ or an underlined character
+//
 class HangmanCharacter extends GameObject {
   PFont font;
   char character;

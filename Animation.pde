@@ -9,10 +9,6 @@
 // https://docs.microsoft.com/en-us/dotnet/desktop/wpf/graphics-multimedia/animation-overview
 // otherwise, the implementation code is all mine.
 //
-import java.util.function.Consumer;
-
-int g_activeAnimations;
-int g_attachedAnimations;
 
 enum LoopMode {
   RESTART, REVERSE
@@ -30,11 +26,11 @@ interface AnimationTimer {
 }
 
 interface AnimationAction {
-  void action(float f); 
+  void action(float f);
 }
 
 interface TriggerAction {
-  void action(); 
+  void action();
 }
 
 //.
@@ -124,13 +120,15 @@ abstract class AnimationBase extends GameObject {
 class Animation extends AnimationBase {
   float from;
   float to;
+
   double duration;
+
   Ease ease;
 
   int loops;
   LoopMode loopMode;
 
-  // using a consumer and lambda makes setting properties every frame significantly simpler
+  // using a lambda makes setting properties every frame significantly simpler
   AnimationAction action;
 
   private int completedLoops = 0;
@@ -172,9 +170,12 @@ class Animation extends AnimationBase {
 
     g_activeAnimations += 1;
 
+    // calculate the current animation time relative to the current loop, and clamp it
+    // to the maximum loop duration
     double rawElapsedTime = this.getElapsedSeconds() - (completedLoops * duration);
     double elapsedTime = Math.min(rawElapsedTime, this.duration);
 
+    // calculate the current, eased value
     double value = 0.0d;
     if (loopMode == LoopMode.REVERSE && (completedLoops % 2) != 0) {
       value = this.to + (this.from - this.to) * this.ease.ease(elapsedTime / this.duration);
@@ -182,6 +183,7 @@ class Animation extends AnimationBase {
       value = this.from + (this.to - this.from) * this.ease.ease(elapsedTime / this.duration);
     }
 
+    // call the action with the current value
     action.action((float)value);
 
     if (rawElapsedTime >= this.duration) {
@@ -230,7 +232,7 @@ class Interval extends AnimationBase {
   private double nextInterval = -1;
   private double duration;
   private TriggerAction trigger;
-  
+
   public Interval(double interval, double duration, TriggerAction trigger) {
     this.interval = interval;
     this.duration = duration;
@@ -265,7 +267,8 @@ class Interval extends AnimationBase {
 }
 
 //
-// A storyboard is a collection of animations which, given a start time, will run together
+// A storyboard is a collection of animations which, given a start time, will run together.
+// It is implemented as a sequence of events which start and end at specific times.
 //
 
 class Storyboard extends AnimationBase {
@@ -283,34 +286,43 @@ class Storyboard extends AnimationBase {
     return duration;
   }
 
+  // add an animation at a specific start time
   Storyboard add(double startTime, AnimationBase anim) {
     events.add(new StoryboardEvent(anim, startTime));
     return this;
   }
 
+  // add an animation at the very end of the storyboard
   Storyboard then(AnimationBase anim) {
-    events.add(new StoryboardEvent(anim, getDuration()));
-    return this;
+    return this.then(0, anim);
   }
 
+  // add an animation at the end of the storyboard + a delay
   Storyboard then(float delay, AnimationBase anim) {
     events.add(new StoryboardEvent(anim, getDuration() + delay));
     return this;
   }
 
+  // add an animation to run concurrently with the previous animation, if any
   Storyboard with(AnimationBase anim) {
-    events.add(new StoryboardEvent(anim, events.get(events.size() - 1).startTime));
+    if (events.size() > 0) {
+      events.add(new StoryboardEvent(anim, events.get(events.size() - 1).startTime));
+    } else {
+      events.add(new StoryboardEvent(anim, 0));
+    }
     return this;
   }
-
+  
+  // add an animation to run after the previously added animation
+  // (not always storyboard length)
   Storyboard after(AnimationBase anim) {
-    var lastEvent =events.get(events.size() - 1);
+    var lastEvent = events.get(events.size() - 1);
     events.add(new StoryboardEvent(anim, lastEvent.endTime));
     return this;
   }
 
   void seek(double time) {
-    super.seek(time);    
+    super.seek(time);
   }
 
   void stop() {
@@ -352,6 +364,7 @@ class Storyboard extends AnimationBase {
     }
   }
 
+  // a storyboard specifies its own animation timer to allow animations to run synchronised, and seeking back and forth
   private class StoryboardAnimationTimer implements AnimationTimer {
     private Storyboard storyboard;
     private double startTime;

@@ -19,6 +19,10 @@ class MainScene extends Scene {
   private PauseOverlay pauseMenu;
 
   public MainScene() {
+  }
+
+  // the pause menu depends on fonts we don't load instantly, so we have to do this later
+  void lateInit() {
     pauseMenu = new PauseOverlay();
     pauseMenu.setActive(false);
     this.children.add(pauseMenu);
@@ -29,7 +33,9 @@ class MainScene extends Scene {
       nextScene.update(deltaTime);
     }
 
-    currentScene.update(deltaTime);
+    if (currentScene != null) {
+      currentScene.update(deltaTime);
+    }
   }
 
   void drawObject() {
@@ -37,7 +43,17 @@ class MainScene extends Scene {
       nextScene.draw();
     }
 
-    currentScene.draw();
+    if (currentScene != null) {
+      currentScene.draw();
+    } else {
+      // if we dont yet have a scene, we'll show a loading placeholder
+      // this is the only framerate dependent animation in the entire game, but there's really no point
+      // setting up the whole animation system just for this
+
+      fill(0, 0, 0);
+      textFont(g_consolas24);
+      text("Now loading" + ".".repeat((int)Math.round((frameCount % 30.0f) / 10.0f)), width - 222, height - 32);
+    }
   }
 
   void goToScene(Scene scene) {
@@ -69,8 +85,8 @@ class MainScene extends Scene {
     }
   }
 
-  void keyPressed() {
-    if (pauseMenu.getActive()) {
+  boolean onKeyPressed() {
+    if (pauseMenu != null && pauseMenu.getActive()) {
       pauseMenu.keyPressed();
     }
 
@@ -78,6 +94,8 @@ class MainScene extends Scene {
     if (!isTransitioning && currentScene != null) {
       currentScene.keyPressed();
     }
+
+    return true;
   }
 
   void cleanupScenes() {
