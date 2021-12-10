@@ -133,13 +133,12 @@ abstract class AnimationBase extends GameObject {
 class Animation extends AnimationBase {
   float from;
   float to;
-
   double duration;
-
-  Ease ease;
 
   int loops;
   LoopMode loopMode;
+  
+  Ease ease;
 
   // using a lambda makes setting properties every frame significantly simpler
   AnimationAction action;
@@ -169,7 +168,7 @@ class Animation extends AnimationBase {
 
   double getDuration() {
     // negative loops run forever.
-    if (this.loops < 0) return Float.POSITIVE_INFINITY;
+    if (this.loops < 0) return Double.POSITIVE_INFINITY;
 
     return this.duration * loops;
   }

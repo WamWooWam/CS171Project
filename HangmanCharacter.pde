@@ -24,9 +24,14 @@ class HangmanCharacter extends GameObject {
   void drawObject() {
     textFont(font);
 
+    // dont draw spaces
+    if (character == ' ')
+      return;
+    
+    // draw the character if it's not null
     if (character != 0)
       text(character, 0, this.h);
-    if (character != ' ')
-      text('_', 0, this.h);
+    // and the underline
+    text('_', 0, this.h);
   }
 }

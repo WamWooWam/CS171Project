@@ -79,20 +79,29 @@ Difficulty getDifficulty(int i) {
   return Difficulty.values()[i];
 }
 
+// helper function to align an object to the centre of a bounding box on the x axis
 void alignHorizontalCentre(GameObject obj, float bounds) {
   obj.x = (bounds - obj.w) / 2;
 }
 
+// helper function to align an object to the centre of a bounding box on the y axis
 void alignVerticalCentre(GameObject obj, float bounds) {
   obj.y = (bounds - (obj.h)) / 2;
 }
 
+// helper function to align an object to the centre of a bounding box on both axis
 void alignCentre(GameObject obj, float maxWidth, float maxHeight) {
   alignHorizontalCentre(obj, maxWidth);
   alignVerticalCentre(obj, maxHeight);
 }
 
+// helper function measure a font
 float measureFont(PFont font) {
   textFont(font);
   return textWidth('W');
+}
+
+// helper function to format a string as "X.XXms"
+String formatMs(double ms) {
+  return nf((float)ms * 1000, 0, 2) + "ms";
 }

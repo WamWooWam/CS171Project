@@ -4,8 +4,8 @@ void setup() {
   size(1280, 720);
   // enable support for high pixel densities
   pixelDensity(displayDensity());
-  // uncap the framerate
-  frameRate(-1);
+  // cap the framerate to 30 while loading
+  frameRate(30);
 
   // set the window title to the game title.
   surface.setTitle("H_ngm_n!");
@@ -51,13 +51,12 @@ void init() {
   // load and init save data
   g_saveData = new SaveData();  
 
+  // uncap the framerate now loaded
+  frameRate(-1);
+  
   // everything's loaded, switch to the title scene
   g_mainScene.lateInit();
   g_mainScene.goToScene(new TitleScene());
-}
-
-String formatMs(double ms) {
-  return nf((float)ms * 1000, 0, 2) + "ms";
 }
 
 void draw() {
