@@ -37,7 +37,7 @@ class Hangman extends GameObject {
   private GameSceneData state;
 
   public Hangman(GameSceneData state, float x, float y) {
-    super(x, y, 592, 568); // todo: calc width, height
+    super(x, y, 568, 592); // todo: calc width, height
     this.state = state;
   }
 

@@ -88,93 +88,56 @@ class MainMenu extends GameObject {
     // we draw a rectangle from the middle moving out depending on the height, we also set a clipping
     // rect to clip our child objects to our current bounds
     rect(0, ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
-    clip(0, ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
+    //clip(0, ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
+    
+    clip(MENU_LEFT, MENU_TOP + ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
   }
 }
 
 //
 // this class handles the main menu page
 //
-class MainMenuPage1 extends GameObject {
+class MainMenuPage1 extends ButtonContainer {
 
   // our parent menu
   private MainMenu menu;
-  
-  // keep track of the selected button
-  private int selectedButton = 0;
-  // as well as the buttons we're showing
-  private ArrayList<MenuButton> buttons;
-  // and the title text
+
   private Text titleText;
 
   public MainMenuPage1(MainMenu menu, float x, float y, float w, float h) {
     super(x, y, w, h);
 
     this.menu = menu;
-    buttons = new ArrayList<MenuButton>();
-    buttons.add(new MenuButton(12, 84, w - 24, 48, "Easy"));
-    buttons.add(new MenuButton(12, 144, w - 24, 48, "Normal"));
-    buttons.add(new MenuButton(12, 204, w - 24, 48, "Hard"));
-    buttons.add(new MenuButton(12, 264, w - 24, 48, "Custom"));
+
+    this.addButton(12, 84, w - 24, 48, "Easy");
+    this.addButton(12, 144, w - 24, 48, "Normal");
+    this.addButton(12, 204, w - 24, 48, "Hard");
+    this.addButton(12, 264, w - 24, 48, "Custom");
 
     titleText = new Text(12, 12, "Select a Difficulty", g_consolas48);
     alignHorizontalCentre(titleText, w);
 
     this.children.add(titleText);
-    this.children.addAll(buttons);
   }
 
-  void updateObject(float deltaTime) {
-    // update the selected button
-    for (int i = 0; i < buttons.size(); i++) {
-      buttons.get(i).isSelected = i == selectedButton;
-    }
+  boolean shouldHandleEvents() {
+    return this.menu.state == MenuState.PAGE1;
   }
 
-  boolean onKeyPressed() {
-    if (menu.state != MenuState.PAGE1) return true;
+  void onClick(int idx) {
+    // if the player makes a selection
+    menu.state = MenuState.TRANSITION;
+    g_audio.playCue(1);
 
-    if (keyCode == UP) {
-      // move the selection up one
-      selectedButton = selectedButton - 1;
-      if (selectedButton < 0) {
-        // wrap around if needed
-        selectedButton = buttons.size() - 1;
-      }
-
-      g_audio.playCue(0);
+    // either go to the custom menu or start a new game
+    var board = new Storyboard();
+    if (idx == 3) {
+      board.add(0.2f, new Trigger(() -> menu.goToCustom()));
+    } else {
+      board.add(0.2f, new Trigger(() -> menu.goToGame(getDifficulty(idx), null)));
     }
 
-    if (keyCode == DOWN) {
-      // move the selection down one
-      selectedButton = selectedButton + 1;
-      if (selectedButton >= buttons.size()) {
-        // wrap around if needed
-        selectedButton = 0;
-      }
-
-      g_audio.playCue(0);
-    }
-
-    if (keyCode == ENTER || keyCode == RETURN) {
-      // if the player makes a selection
-      menu.state = MenuState.TRANSITION;
-      g_audio.playCue(1);
-
-      // either go to the custom menu or start a new game
-      var board = new Storyboard();
-      board.add(0.0f, buttons.get(selectedButton).getPressAnimation());
-      if (selectedButton == 3) {
-        board.add(0.2f, new Trigger(() -> menu.goToCustom()));
-      } else {
-        board.add(0.2f, new Trigger(() -> menu.goToGame(getDifficulty(selectedButton), null)));
-      }
-
-      board.begin(this);
-      return true;
-    }
-
-    return false;
+    board.begin(this);
   }
 }
 
@@ -182,13 +145,15 @@ class MainMenuPage1 extends GameObject {
 // this class handles the secondary menu page where you type a word
 //
 class MainMenuPage2 extends GameObject {
-  
+
   // our parent menu
   private MainMenu menu;
-  
+
   private Text titleText;
   private Text subtitleText;
-  
+
+  private MenuButton startGameButton;
+
   // a list of the typed characters, plus an '_' character.
   private ArrayList<HangmanCharacter> characters;
 
@@ -206,6 +171,10 @@ class MainMenuPage2 extends GameObject {
     alignHorizontalCentre(titleText, w);
     alignHorizontalCentre(subtitleText, w);
 
+    this.startGameButton = new MenuButton(24, h - 64, w - 48, 48, "Start Game", () -> this.startGame());
+    this.startGameButton.isEnabled = false;
+    this.children.add(startGameButton);
+
     this.characters = new ArrayList<HangmanCharacter>();
     this.addTerminatorChar();
     this.layoutCharacters();
@@ -215,15 +184,15 @@ class MainMenuPage2 extends GameObject {
     animation.begin(this);
   }
 
-  // layout the characters 
-  void layoutCharacters() {    
+  // layout the characters
+  void layoutCharacters() {
     int characterCount = this.characters.size();
 
     // the width of one character
-    float charWidth = g_consolas48CharWidth;
+    float charWidth = getWidth(g_consolas48);
     // spacing between characters, max 16px
     float charSpacing = min((600 - ((charWidth) * characterCount)) / characterCount, 16);
-    
+
     // the starting coordinates
     float startY = (this.h / 2);
     float startX = (this.w - ((charWidth + charSpacing) * (characterCount - 1))) / 2;
@@ -255,6 +224,15 @@ class MainMenuPage2 extends GameObject {
     this.characters.add(nextCharacter);
   }
 
+  void onMouseReleased(float x, float y) {
+    if (mouseButton == RIGHT) {
+      this.characters.clear();
+      this.addTerminatorChar();
+
+      menu.goToMain();
+    }
+  }
+
   boolean onKeyPressed() {
     if (menu.state != MenuState.PAGE2) return true;
 
@@ -271,14 +249,8 @@ class MainMenuPage2 extends GameObject {
     }
 
     // start the game if we have enough characters
-    if (keyCode == RETURN || keyCode == ENTER && this.characters.size() > 3) {
-      String word = "";
-      for (int i = 0; i < this.characters.size() - 1; i++) {
-        word += this.characters.get(i).character;
-      }
-
-      if (word.trim().length() > 3)
-        menu.goToGame(Difficulty.CUSTOM, word.trim());
+    if (keyCode == RETURN || keyCode == ENTER) {
+      this.startGame();
     }
 
     var keyChar = Character.toLowerCase(key);
@@ -291,8 +263,24 @@ class MainMenuPage2 extends GameObject {
       character.fill = color(0, 0, 0);
     }
 
+    this.startGameButton.isEnabled = this.characters.size() > 3;
+
     // relayout characters
     this.layoutCharacters();
     return true;
+  }
+
+  void startGame() {
+    if (this.characters.size() > 3) {
+      String word = "";
+      for (int i = 0; i < this.characters.size() - 1; i++) {
+        word += this.characters.get(i).character;
+      }
+
+      if (word.trim().length() > 3) {
+        g_audio.playCue(1);
+        menu.goToGame(Difficulty.CUSTOM, word.trim());
+      }
+    }
   }
 }

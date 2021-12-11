@@ -26,7 +26,7 @@ class Background extends GameObject {
     super(0, 0, width, height);
 
     this.fill = color(255, 255, 255);
-    this.stroke = color(192, 192, 192);
+    this.stroke = color(192, 192, 192, 255);
     this.strokeThickness = 1;
 
     // create and initialise 100 squares.

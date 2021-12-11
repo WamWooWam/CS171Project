@@ -37,7 +37,7 @@ class PauseOverlay extends GameObject {
     this.children.add(overlayRect);
     this.children.add(menu);
   }
-  
+
   // shows the menu
   void open() {
     this.setActive(true);
@@ -64,7 +64,7 @@ class PauseOverlay extends GameObject {
   }
 }
 
-class PauseMenu extends GameObject {
+class PauseMenu extends ButtonContainer {
   // for the opening clip effect, we have to scale the clipping rect around its centre
   // in order to make this maths easier, we keep the width, height, centre x, centre y
   // top left corner, and top right corner values of the menu in sync here.
@@ -77,9 +77,6 @@ class PauseMenu extends GameObject {
 
   float currentHeight = 0.0f;
 
-  private int selectedButton = 0;
-  private ArrayList<MenuButton> buttons;
-
   public PauseMenu() {
     super(MENU_LEFT, MENU_TOP, MENU_WIDTH, MENU_HEIGHT);
 
@@ -87,58 +84,26 @@ class PauseMenu extends GameObject {
     alignHorizontalCentre(titleText, w);
 
     this.children.add(titleText);
-
-    buttons = new ArrayList<MenuButton>();
-    buttons.add(new MenuButton(12, 96, w - 24, 48, "Resume"));
-    buttons.add(new MenuButton(12, 160, w - 24, 48, "Quit to Title"));
-
-    this.children.addAll(buttons);
+    
+    this.addButton(12, 96, w - 24, 48, "Resume");
+    this.addButton(12, 160, w - 24, 48, "Quit to Title");
   }
 
-  void updateObject(float deltaTime) {
-    for (int i = 0; i < buttons.size(); i++) {
-      buttons.get(i).isSelected = i == selectedButton;
-    }
+  boolean shouldHandleEvents() {
+    return true;
   }
 
-  boolean onKeyPressed() {
-    if (keyCode == UP) {
-      // move the selection up one
-      selectedButton = selectedButton - 1;
-      if (selectedButton < 0) {
-        // wrap around if needed
-        selectedButton = buttons.size() - 1;
-      }
+  void onClick(int idx) {
+    // close this menu
+    g_audio.playCue(1);
+    g_mainScene.togglePause();
 
-      g_audio.playCue(0);
+    // return to the title screen if selected
+    if (idx == 1) {
+      var scene = new TitleScene();
+      scene.forceOpen();
+      g_mainScene.goToScene(scene);
     }
-
-    if (keyCode == DOWN) {
-      // move the selection down one
-      selectedButton = selectedButton + 1;
-      if (selectedButton >= buttons.size()) {
-        // wrap around if needed
-        selectedButton = 0;
-      }
-
-      g_audio.playCue(0);
-    }
-
-
-    if (keyCode == ENTER || keyCode == RETURN) {
-      // close this menu
-      g_audio.playCue(1);
-      g_mainScene.togglePause();
-
-      // return to the title screen if selected
-      if (selectedButton == 1) {
-        var scene = new TitleScene();
-        scene.forceOpen();
-        g_mainScene.goToScene(scene);
-      }
-    }
-
-    return false;
   }
 
   void drawObject() {
@@ -146,6 +111,6 @@ class PauseMenu extends GameObject {
     strokeWeight(1);
     fill(255, 255, 255);
     rect(0, ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
-    clip(0, ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
+    clip(MENU_LEFT, MENU_TOP + ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
   }
 }

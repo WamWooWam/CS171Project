@@ -15,6 +15,7 @@ class TitleScene extends Scene {
 
   private float titleTextDuration;
   private Storyboard titleSequence;
+  private Storyboard pressStartSequence;
   private Storyboard menuOpeningSequence;
 
   public TitleScene() {
@@ -38,8 +39,10 @@ class TitleScene extends Scene {
     // create the title sequence storyboard
     this.titleSequence = new Storyboard()
       .add(0, titleTextStoryboard)
-      .then(new Trigger(() -> startPressStart()))
-      .then(new Animation(1, 254, 0.5f, -1, LoopMode.REVERSE, EASE_IN_OUT_SINE, (f) -> pressStartText.fill = color(0, 0, 0, f)));
+      .then(new Trigger(() -> startPressStart()));
+
+    this.pressStartSequence = new Storyboard()
+      .add(0, new Animation(0, 255, 0.5f, -1, LoopMode.REVERSE, EASE_IN_OUT_SINE, (f) -> pressStartText.fill = color(0, 0, 0, f)));
 
     // create a storyboard for opening the menu
     this.menuOpeningSequence = new Storyboard()
@@ -69,6 +72,7 @@ class TitleScene extends Scene {
   // begins the press start sequence
   void startPressStart() {
     this.state = TitleSceneState.PRESS_START;
+    this.pressStartSequence.begin(this);
   }
 
   // opens the main menu
@@ -77,7 +81,7 @@ class TitleScene extends Scene {
     this.pressStartText.setActive(false);
     this.menuOpeningSequence.begin(this);
   }
-  
+
   // tells the game that the main menu is open
   void startMenuOpen() {
     this.state = TitleSceneState.MENU_OPEN;
@@ -95,13 +99,27 @@ class TitleScene extends Scene {
   boolean onKeyPressed() {
     if (state == TitleSceneState.TITLE_DROP) {
       // skip to the end of the title sequence
-      titleSequence.seek(titleTextDuration - 0.05f);
+      titleSequence.stop();
+      titleText.skipAnimation();
+      startPressStart();
     } else if (state == TitleSceneState.PRESS_START) {
       g_audio.playCue(1);
       startMenuOpening();
     }
 
     return false;
+  }
+
+  void onMouseReleased(float x, float y) {
+    if (state == TitleSceneState.TITLE_DROP) {
+      // skip to the end of the title sequence
+      titleSequence.stop();
+      titleText.skipAnimation();
+      startPressStart();
+    } else if (state == TitleSceneState.PRESS_START) {
+      g_audio.playCue(1);
+      startMenuOpening();
+    }
   }
 
   void cleanup() {

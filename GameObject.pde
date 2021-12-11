@@ -13,6 +13,8 @@ class GameObject implements Drawable {
   protected boolean skipUpdate = false;
   protected boolean wasPaused = false;
 
+  private boolean wasMouseInBounds = false;
+
   // intrinsic object properties
   public float x;
   public float y;
@@ -72,8 +74,8 @@ class GameObject implements Drawable {
     this.scale = 1;
     this.isActive = true;
     this.children = new ArrayList<>();
-    this.fill = color(255, 255, 255);
-    this.stroke = color(0, 0, 0);
+    this.fill = color(255, 255, 255, 255);
+    this.stroke = color(0, 0, 0, 255);
   }
 
   final void update(float deltaTime) {
@@ -143,10 +145,13 @@ class GameObject implements Drawable {
     }
 
     // assign the object's fill/stroke/strokeWeight
+    // processing is stupid and assumes 0 (i.e. rgba(0,0,0,0)) is actually pure black (rgba(0,0,0,1))
+    // as such we manually extract and specify the alpha value (this is documented nowhere)
+    // source: https://stackoverflow.com/a/49701996
     if (fill != null)
-      fill(fill);
+      fill(fill, 0xFF & fill >> 24); 
     if (stroke != null)
-      stroke(stroke);
+      stroke(stroke, 0xFF & stroke >> 24);
     if (strokeThickness != null)
       strokeWeight(strokeThickness);
 
@@ -162,6 +167,10 @@ class GameObject implements Drawable {
   }
 
   final void keyPressed() {
+    if (!isActive) {
+      return;
+    }
+
     // allow this object's keypress handler to skip any child objects
     if (this.onKeyPressed()) return;
 
@@ -170,6 +179,80 @@ class GameObject implements Drawable {
       children.get(i).keyPressed();
   }
 
+  // called recursively whenever the mouse is moved
+  final void mouseMoved() {
+    if (!isActive) {
+      return;
+    }
+
+    translate(x, y);
+
+    // calculate the position of the object
+    var absoluteX = screenX(0, 0);
+    var absoluteY = screenY(0, 0);
+
+    // if the mouse is in our bounds
+    if ((mouseX > absoluteX && mouseX < absoluteX + w) && (mouseY > absoluteY && mouseY < absoluteY + h)) {
+      if (!wasMouseInBounds) {
+        this.onMouseEntered();
+        this.wasMouseInBounds = true;
+      }
+
+      this.onMouseMoved(mouseX - absoluteX, mouseY - absoluteY);
+      // pass on any mouse events to child objects
+      for (int i = 0; i < children.size(); i++)
+        this.children.get(i).mouseMoved();
+    } else if (wasMouseInBounds) {
+      this.onMouseLeft();
+      this.wasMouseInBounds = false;
+    }
+
+    translate(-x, -y);
+  }
+
+  final void mousePressed() {
+    if (!isActive) {
+      return;
+    }
+
+    translate(x, y);
+
+    // calculate the position of the object
+    var absoluteX = screenX(0, 0);
+    var absoluteY = screenY(0, 0);
+
+    // if the mouse is in our bounds
+    if ((mouseX > absoluteX && mouseX < absoluteX + w) && (mouseY > absoluteY && mouseY < absoluteY + h)) {
+      this.onMousePressed(mouseX - absoluteX, mouseY - absoluteY);
+      // pass on any mouse events to child objects
+      for (int i = 0; i < children.size(); i++)
+        this.children.get(i).mousePressed();
+    }
+
+    translate(-x, -y);
+  }
+
+  final void mouseReleased() {
+    if (!isActive) {
+      return;
+    }
+
+    translate(x, y);
+
+    // calculate the position of the object
+    var absoluteX = screenX(0, 0);
+    var absoluteY = screenY(0, 0);
+
+    // if the mouse is in our bounds
+    if ((mouseX > absoluteX && mouseX < absoluteX + w) && (mouseY > absoluteY && mouseY < absoluteY + h)) {
+      this.onMouseReleased(mouseX - absoluteX, mouseY - absoluteY);
+      // pass on any mouse events to child objects
+      for (int i = 0; i < children.size(); i++)
+        this.children.get(i).mouseReleased();
+    }
+
+    translate(-x, -y);
+  }
   // these are methods to be implemented by the object to update, draw, handle events, etc.
 
   // awake is called before the first update loop
@@ -189,5 +272,21 @@ class GameObject implements Drawable {
   // we skip processing key events for child objects.
   protected boolean onKeyPressed() {
     return false;
+  }
+
+  protected void onMouseEntered() {
+  }
+
+  // onMouseMoved allows objects to react to mouse movements inside their bounds
+  protected void onMouseMoved(float x, float y) {
+  }
+
+  protected void onMouseLeft() {
+  }
+
+  protected void onMousePressed(float x, float y) {
+  }
+
+  protected void onMouseReleased(float x, float y) {
   }
 }

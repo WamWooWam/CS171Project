@@ -17,11 +17,12 @@ int g_objectUpdateCount;
 int g_objectDrawCount;
 int g_activeAnimations;
 int g_attachedAnimations;
+int g_mouseEvents;
 
 double g_minFrameTime = Double.POSITIVE_INFINITY;
 double g_maxFrameTime = Double.NEGATIVE_INFINITY;
-double[] g_lastFrameTimes = new double[60];
-double[] g_lastFrameRates = new double[60];
+float[] g_lastFrameTimes = new float[120];
+float[] g_lastFrameRates = new float[120];
 
 // we keep track of if the ctrl key is pressed so we can enable/disable the debugger on
 // ctrl+d
@@ -46,17 +47,11 @@ WordList g_hardWords;
 
 // as consolas is a monospaced font, we can assume the same width for all characters.
 PFont g_consolas24;
-float g_consolas24CharWidth;
 PFont g_consolas32;
-float g_consolas32CharWidth;
 PFont g_consolas48;
-float g_consolas48CharWidth;
 PFont g_consolas56;
-float g_consolas56CharWidth;
 PFont g_consolas64;
-float g_consolas64CharWidth;
 PFont g_consolas96;
-float g_consolas96CharWidth;
 
 // java enums are stupid
 // based on: https://stackoverflow.com/questions/8157755/how-to-convert-enum-value-to-int
@@ -96,7 +91,7 @@ void alignCentre(GameObject obj, float maxWidth, float maxHeight) {
 }
 
 // helper function measure a font
-float measureFont(PFont font) {
+float getWidth(PFont font) {
   textFont(font);
   return textWidth('W');
 }

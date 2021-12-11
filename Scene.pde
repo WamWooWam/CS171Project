@@ -103,6 +103,7 @@ class MainScene extends Scene {
   boolean onKeyPressed() {
     if (pauseMenu != null && pauseMenu.getActive()) {
       pauseMenu.keyPressed();
+      return true;
     }
 
     // we only want to give key events to the active scene
@@ -111,6 +112,26 @@ class MainScene extends Scene {
     }
 
     return true;
+  }
+  
+  void onMousePressed(float x, float y) {
+    // we only want to give mouse events to the active scene
+    if (!isTransitioning && currentScene != null) {
+      currentScene.mousePressed();
+    } 
+  }
+  void onMouseReleased(float x, float y) {
+    // we only want to give mouse events to the active scene
+    if (!isTransitioning && currentScene != null) {
+      currentScene.mouseReleased();
+    } 
+  }
+  
+  void onMouseMoved(float x, float y) {
+    // we only want to give mouse events to the active scene
+    if (!isTransitioning && currentScene != null) {
+      currentScene.mouseMoved();
+    } 
   }
   
   void cleanup() {

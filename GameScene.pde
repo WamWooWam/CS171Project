@@ -91,11 +91,6 @@ class GameSceneData {
   void keyPressed(char keyChar) {
     if (state != GameState.PLAYING) return;
 
-    if (keyCode == ESC) {
-      g_mainScene.togglePause();
-      state = GameState.INTRO;
-    }
-
     if (g_ctrlPressed && keyCode == RIGHT) {
       remainingTime = max(0, remainingTime - 10);
     }
@@ -146,7 +141,7 @@ class GameScene extends Scene {
   Text ready; // ready text
   Text set; // set text
   Text go; // go text
-
+  
   Hangman hangman; // the hangman object
   HangmanCharacter[] characters; // the characters in play
   Storyboard characterAnimation; // the characters' wobble animation
@@ -194,30 +189,23 @@ class GameScene extends Scene {
   }
 
   void playIntro() {
-    this.characterAnimation.stop();    
-
-    ready.setActive(true);
-    set.setActive(true);
-    go.setActive(true);
-
+    this.characterAnimation.stop();
+    
     // count down through "ready", "set", "go", by setting the opacity to 100%, then fading out,
     // playing a sound cue at the same time
     var sb = new Storyboard();
     sb.add(0.0f, new Trigger(() -> g_audio.playBgm(this.state.bgm, 0.5f)))
       .then(1.0f, new Trigger(() -> ready.fill = color(0, 0, 0, 255)))
       .with(new Trigger(() -> g_audio.playCue(5)))
-      .then(0.25f, new Animation(255, 1, 0.75f, (f) -> ready.fill = color(0, 0, 0, f)))
+      .then(0.25f, new Animation(255, 0, 0.75f, (f) -> ready.fill = color(0, 0, 0, f)))
       .then(0.25f, new Trigger(() -> set.fill = color(0, 0, 0, 255)))
       .with(new Trigger(() -> g_audio.playCue(5)))
-      .then(0.25f, new Animation(255, 1, 0.75f, (f) -> set.fill = color(0, 0, 0, f)))
+      .then(0.25f, new Animation(255, 0, 0.75f, (f) -> set.fill = color(0, 0, 0, f)))
       .then(0.25f, new Trigger(() -> go.fill = color(0, 0, 0, 255)))
       .with(new Trigger(() -> g_audio.playCue(6)))
       .with(new Trigger(() -> this.state.startPlay()))
       .with(new Trigger(() -> this.characterAnimation.begin(this)))
-      .then(0.25f, new Animation(255, 1, 0.5f, (f) -> go.fill = color(0, 0, 0, f)))
-      .then(new Trigger(() -> ready.setActive(false)))
-      .then(new Trigger(() -> set.setActive(false)))
-      .then(new Trigger(() -> go.setActive(false)));
+      .then(0.25f, new Animation(255, 0, 0.5f, (f) -> go.fill = color(0, 0, 0, f)));
 
     sb.begin(this);
   }
@@ -281,6 +269,11 @@ class GameScene extends Scene {
   }
 
   boolean onKeyPressed() {
+    if (keyCode == ESC && this.state.state == GameState.PLAYING) {
+      g_mainScene.togglePause();
+      this.state.state = GameState.INTRO;
+    }
+    
     this.state.keyPressed(key);
     return false;
   }
@@ -290,12 +283,12 @@ class GameScene extends Scene {
     characters = new HangmanCharacter[state.word.length()];
 
     PFont font = g_consolas56;
-    
+
     textFont(font);
     int characterCount = state.word.length();
 
     // the character width
-    float charWidth = g_consolas56CharWidth;
+    float charWidth = getWidth(g_consolas56);
     // space between each character, calculated as the total remaining space divided by the number of characters, maximum 16px
     float charSpacing = min((MAX_WORD_WIDTH - ((charWidth) * characterCount)) / characterCount, 16);
 
@@ -305,7 +298,7 @@ class GameScene extends Scene {
     float startX = 540 + (MAX_WORD_WIDTH - ((charWidth + charSpacing) * characterCount)) / 2;
 
     characterAnimation = new Storyboard();
-    for (int i = 0; i < state.word.length(); i++) {      
+    for (int i = 0; i < state.word.length(); i++) {
       // create a new character at the start position, plus the character spacing * the current character position
       var character = new HangmanCharacter(startX + ((charWidth + charSpacing) * i), startY, state.wordState[i], font);
       // this causes characters to extend below their visual bounds, which creates for a nice effect on the results screen
@@ -328,7 +321,7 @@ class GameScene extends Scene {
       // this places each character at random until it intersects with the bounds of no others
       // makes uses of java's Rectangle2D class from: https://docs.oracle.com/javase/7/docs/api/java/awt/Rectangle.html
       do {
-        
+
         // set a random x,y position
         text.x = random(720, 1120);
         text.y = random(400, 620);

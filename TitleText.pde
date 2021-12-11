@@ -12,12 +12,12 @@ class TitleText extends GameObject {
   private final int ANIMATION_Y = 360;
 
   public TitleText(float x, float y) {
-    super(x, y, g_consolas64CharWidth * 2 * TITLE_CHARS.length, 64);
+    super(x, y, getWidth(g_consolas64) * 2 * TITLE_CHARS.length, 64);
     this.x = (width - this.w) / 2f;
 
     titleStoryboard = new Storyboard();
     for (int i = 0; i < TITLE_CHARS.length; i++) {
-      HangmanCharacter character = new HangmanCharacter(g_consolas64CharWidth * 2 * i, 0, TITLE_CHARS[i]);
+      HangmanCharacter character = new HangmanCharacter(getWidth(g_consolas64) * 2 * i, 0, TITLE_CHARS[i]);
       titleStoryboard.add(i * ANIMATION_SPACE, new Animation(0, ANIMATION_Y, ANIMATION_TIME, EASE_OUT_CUBIC, f -> character.y = f));
       this.children.add(character);
     }

@@ -40,6 +40,8 @@ class ResultsScreen extends GameObject {
   private float endOfAnim;
   private float endOfTally;
 
+  private Background background;
+
   ResultsScreen(GameScene gameScene, GameSceneData gameState) {
     super(0, 0, width, height);
 
@@ -49,22 +51,24 @@ class ResultsScreen extends GameObject {
     // an overlay to hide the game behind the screen
     this.overlayRect = new Rectangle(0, 0, width, height);
     this.overlayRect.strokeThickness = 0;
-    this.overlayRect.stroke = color(0, 0, 0, 1);
-    this.overlayRect.fill = color(0, 0, 0, 1);
+    this.overlayRect.stroke = color(0, 0, 0, 0);
+    this.overlayRect.fill = color(0, 0, 0, 0);
     this.children.add(overlayRect);
 
     // the background particle field
-    this.children.add(new Background(0));
+    this.background = new Background(0);
+    this.background.stroke = color(192, 192, 192, 0);
+    this.children.add(this.background);
 
     // create and align the labels for bonuses and total score
-    this.timeBonusLabel = new Text(400, 320, "TIME BONUS:", g_consolas48, color(0, 0, 0, 1));
+    this.timeBonusLabel = new Text(400, 320, "TIME BONUS:", g_consolas48, color(0, 0, 0, 0));
     this.timeBonusLabel.x = ((width - (this.timeBonusLabel.w * 2)) / 2) + 48;
-    this.mistakeBonusLabel = new Text(400, 368, "MISTAKE BONUS:", g_consolas48, color(0, 0, 0, 1));
+    this.mistakeBonusLabel = new Text(400, 368, "MISTAKE BONUS:", g_consolas48, color(0, 0, 0, 0));
     this.mistakeBonusLabel.x = ((width - (this.mistakeBonusLabel.w * 2)) / 2) + 48;
-    this.totalScoreLabel = new Text(400, 452, "SCORE:", g_consolas48, color(0, 0, 0, 1));
+    this.totalScoreLabel = new Text(400, 452, "SCORE:", g_consolas48, color(0, 0, 0, 0));
     this.totalScoreLabel.x = ((width - (this.totalScoreLabel.w * 2)) / 2) + 48;
 
-    this.highScoreLabel = new Text(400, 540, "NEW HIGH SCORE!", g_consolas48, color(0, 0, 0, 1));
+    this.highScoreLabel = new Text(400, 540, "NEW HIGH SCORE!", g_consolas48, color(0, 0, 0, 0));
     alignHorizontalCentre(this.highScoreLabel, width);
 
     this.children.add(timeBonusLabel);
@@ -72,11 +76,11 @@ class ResultsScreen extends GameObject {
     this.children.add(totalScoreLabel);
     this.children.add(highScoreLabel);
 
-    this.timeBonus = new Text(400, 320, "0", g_consolas48, color(0, 0, 0, 1));
+    this.timeBonus = new Text(400, 320, "0", g_consolas48, color(0, 0, 0, 0));
     this.timeBonus.x = width - this.timeBonus.w - 396;
-    this.mistakeBonus = new Text(400, 368, "0", g_consolas48, color(0, 0, 0, 1));
+    this.mistakeBonus = new Text(400, 368, "0", g_consolas48, color(0, 0, 0, 0));
     this.mistakeBonus.x = width - this.mistakeBonus.w - 396;
-    this.totalScore = new Text(400, 452, "0", g_consolas48, color(0, 0, 0, 1));
+    this.totalScore = new Text(400, 452, "0", g_consolas48, color(0, 0, 0, 0));
     this.totalScore.x = width - this.totalScore.w - 396;
 
     this.children.add(timeBonus);
@@ -84,7 +88,7 @@ class ResultsScreen extends GameObject {
     this.children.add(totalScore);
 
     // create and align the "game over" text
-    this.youLose = new Text(400, -200, "GAME OVER", g_consolas96, color(0, 0, 0, 1));
+    this.youLose = new Text(400, -200, "GAME OVER", g_consolas96, color(0, 0, 0, 0));
     alignHorizontalCentre(this.youLose, width);
 
     this.children.add(youLose);
@@ -211,17 +215,17 @@ class ResultsScreen extends GameObject {
 
     // animate the label and text up while fading in
     scoreStoryboard.add(0.5f, new Animation(timeBonusLabel.y + 16, timeBonusLabel.y, 0.33, EASE_OUT_CUBIC, (f) -> timeBonusLabel.y = f))
-      .with(new Animation(1, 255, 0.33, (f) -> timeBonusLabel.fill = color(0, 0, 0, f)))
+      .with(new Animation(0, 255, 0.33, (f) -> timeBonusLabel.fill = color(0, 0, 0, f)))
       .with(new Animation(timeBonus.y + 16, timeBonus.y, 0.34f, EASE_OUT_CUBIC, (f) -> timeBonus.y = f))
-      .with(new Animation(1, 255, 0.33, (f) -> timeBonus.fill = color(0, 0, 0, f)))
+      .with(new Animation(0, 255, 0.33, (f) -> timeBonus.fill = color(0, 0, 0, f)))
       .then(new Animation(mistakeBonusLabel.y + 16, mistakeBonusLabel.y, 0.33, EASE_OUT_CUBIC, (f) -> mistakeBonusLabel.y = f))
-      .with(new Animation(1, 255, 0.33, (f) -> mistakeBonusLabel.fill = color(0, 0, 0, f)))
+      .with(new Animation(0, 255, 0.33, (f) -> mistakeBonusLabel.fill = color(0, 0, 0, f)))
       .with(new Animation(mistakeBonus.y + 16, mistakeBonus.y, 0.33, EASE_OUT_CUBIC, (f) -> mistakeBonus.y = f))
-      .with(new Animation(1, 255, 0.33, (f) -> mistakeBonus.fill = color(0, 0, 0, f)))
+      .with(new Animation(0, 255, 0.33, (f) -> mistakeBonus.fill = color(0, 0, 0, f)))
       .then(new Animation(totalScoreLabel.y + 16, totalScoreLabel.y, 0.33, EASE_OUT_CUBIC, (f) -> totalScoreLabel.y = f))
-      .with(new Animation(1, 255, 0.33, (f) -> totalScoreLabel.fill = color(0, 0, 0, f)))
+      .with(new Animation(0, 255, 0.33, (f) -> totalScoreLabel.fill = color(0, 0, 0, f)))
       .with(new Animation(totalScore.y + 16, totalScore.y, 0.33, EASE_OUT_CUBIC, (f) -> totalScore.y = f))
-      .with(new Animation(1, 255, 0.33, (f) -> totalScore.fill = color(0, 0, 0, f)));
+      .with(new Animation(0, 255, 0.33, (f) -> totalScore.fill = color(0, 0, 0, f)));
 
     return scoreStoryboard;
   }
@@ -244,7 +248,7 @@ class ResultsScreen extends GameObject {
   Storyboard createHighScoreStoryboard() {
     var sb = new Storyboard()
       .add(0.0f, new Animation(highScoreLabel.y + 16, highScoreLabel.y, 0.33, EASE_OUT_CUBIC, (f) -> highScoreLabel.y = f))
-      .with(new Animation(1, 255, 0.33, LINEAR, (f) -> highScoreLabel.fill = color(0, 0, 0, f)))
+      .with(new Animation(0, 255, 0.33, LINEAR, (f) -> highScoreLabel.fill = color(0, 0, 0, f)))
       .with(new Trigger(() -> g_audio.playCue(8)));
     return sb;
   }
@@ -253,7 +257,7 @@ class ResultsScreen extends GameObject {
   Storyboard createYouLoseTextAnimation() {
     return new Storyboard()
       .add(0.0f, new Animation(-200, 200, 2.0f, EASE_OUT_BOUNCE, (f) -> youLose.y = f))
-      .add(0.0f, new Animation(1, 255, 0.25f, LINEAR, (f) -> youLose.fill = color(0, 0, 0, f)));
+      .add(0.0f, new Animation(0, 255, 0.25f, LINEAR, (f) -> youLose.fill = color(0, 0, 0, f)));
   }
 
   // returns a storyboard that reveals each missing letter of the word one by one
@@ -265,11 +269,11 @@ class ResultsScreen extends GameObject {
     for (int i = 0; i < gameState.word.length(); i++) {
       var character = gameScene.characters[i];
       var letter = gameState.wordCharacters[i];
-      
+
       // if the current letter was revealed, skip it
       if (gameState.wordState[i] != 0) continue;
       var idx = i; // "must be effectively final"
-      
+
       // bounce the character up by 50px, play a sound effect and reveal the letter, then move it down
       sb.add(x * 0.33f, new Animation(targetY, targetY - 50, 0.33f, EASE_IN_CIRCLE, (f) -> character.y = f))
         .then(new Animation(targetY - 50, targetY, 0.33f, EASE_OUT_CIRCLE, (f) -> character.y = f))
@@ -307,7 +311,9 @@ class ResultsScreen extends GameObject {
     mainAnim = new Storyboard();
 
     // fade the background to white
-    mainAnim.add(0.0f, new Animation(1, 255, 1f, LINEAR, (f) -> overlayRect.fill = color(255, 255, 255, f)));
+    mainAnim.add(0.0f, new Animation(0, 255, 1f, LINEAR, (f) -> overlayRect.fill = color(255, 255, 255, f)));
+    mainAnim.add(0.0f, new Animation(0, 255, 1f, LINEAR, (f) -> background.fill = color(255, 255, 255, f)));
+    mainAnim.add(0.0f, new Animation(0, 255, 1f, LINEAR, (f) -> background.stroke = color(192, 192, 192, f)));
 
     // mute music
     mainAnim.add(0.0f, new Animation(1, 0, 0.3f, LINEAR, (f) -> g_audio.setVolume(f)));
@@ -361,7 +367,9 @@ class ResultsScreen extends GameObject {
     mainAnim = new Storyboard();
 
     // fade the background to white
-    mainAnim.add(0.0f, new Animation(1, 255, 1f, LINEAR, (f) -> overlayRect.fill = color(255, 255, 255, f)));
+    mainAnim.add(0.0f, new Animation(0, 255, 1f, LINEAR, (f) -> overlayRect.fill = color(255, 255, 255, f)));
+    mainAnim.add(0.0f, new Animation(0, 255, 1f, LINEAR, (f) -> background.fill = color(255, 255, 255, f)));
+    mainAnim.add(0.0f, new Animation(0, 255, 1f, LINEAR, (f) -> background.stroke = color(192, 192, 192, f)));
 
     // mute music
     mainAnim.add(0.0f, new Animation(1, 0, 0.3f, LINEAR, (f) -> g_audio.setVolume(f)));
