@@ -84,7 +84,7 @@ class PauseMenu extends ButtonContainer {
     alignHorizontalCentre(titleText, w);
 
     this.children.add(titleText);
-    
+
     this.addButton(12, 96, w - 24, 48, "Resume");
     this.addButton(12, 160, w - 24, 48, "Quit to Title");
   }
@@ -111,6 +111,11 @@ class PauseMenu extends ButtonContainer {
     strokeWeight(1);
     fill(255, 255, 255);
     rect(0, ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
-    clip(MENU_LEFT, MENU_TOP + ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
+    
+    // processing docs say clip is relative to the transform, when using P2D this is a lie.
+    if (USE_P2D)
+      clip(MENU_LEFT, MENU_TOP + ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
+    else
+      clip(0, ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
   }
 }

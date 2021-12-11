@@ -88,9 +88,12 @@ class MainMenu extends GameObject {
     // we draw a rectangle from the middle moving out depending on the height, we also set a clipping
     // rect to clip our child objects to our current bounds
     rect(0, ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
-    //clip(0, ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
     
-    clip(MENU_LEFT, MENU_TOP + ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
+    // processing docs say clip is relative to the transform, when using P2D this is a lie.
+    if (USE_P2D)
+      clip(MENU_LEFT, MENU_TOP + ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
+    else
+      clip(0, ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
   }
 }
 

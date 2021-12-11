@@ -11,6 +11,7 @@ static final boolean DEBUG_FRAME_RATE = true;
 static final boolean DEBUG_OBJECT_COUNT = true;
 static final boolean DEBUG_AUDIO = true;
 static final boolean DEBUG_ANIMATION = true;
+static final boolean USE_P2D = true;
 
 // debug counters
 int g_objectUpdateCount;

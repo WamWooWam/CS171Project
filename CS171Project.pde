@@ -1,16 +1,20 @@
-import processing.javafx.*;
 
-
-void setup() {
+void settings() {
   // we're playing at 720p
-  size(1280, 720, P2D);
+  if (USE_P2D)
+    size(1280, 720, P2D);
+  else
+    size(1280, 720);
+
   // enable support for high pixel densities
   pixelDensity(displayDensity());
+  smooth(8);
+}
+
+void setup() {
   // uncap the framerate
   frameRate(1000);
   
-  smooth(8);
-
   // set the window title to the game title.
   surface.setTitle("H_ngm_n!");
 
