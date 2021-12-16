@@ -13,7 +13,6 @@ class TitleScene extends Scene {
   private Text pressStartText;
   private MainMenu mainMenu;
 
-  private float titleTextDuration;
   private Storyboard titleSequence;
   private Storyboard pressStartSequence;
   private Storyboard menuOpeningSequence;
@@ -33,12 +32,10 @@ class TitleScene extends Scene {
     this.mainMenu.setActive(false);
 
     // get the title storyboard and store its duration
-    var titleTextStoryboard = titleText.getStoryboard();
-    this.titleTextDuration = (float)titleTextStoryboard.getDuration();
-
     // create the title sequence storyboard
     this.titleSequence = new Storyboard()
-      .add(0, titleTextStoryboard)
+      .add(0, titleText.getStoryboard())
+      .then(new Trigger(() -> titleText.skipAnimation()))
       .then(new Trigger(() -> startPressStart()));
 
     this.pressStartSequence = new Storyboard()

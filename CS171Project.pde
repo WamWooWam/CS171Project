@@ -11,10 +11,11 @@ void settings() {
   smooth(8);
 }
 
+// we do as little as possible in setup to make sure things load quickly
 void setup() {
-  // uncap the framerate
-  frameRate(1000);
-  
+  // set the framerate
+  frameRate(120);
+
   // set the window title to the game title.
   surface.setTitle("H_ngm_n!");
 
@@ -65,7 +66,7 @@ void draw() {
   g_activeAnimations = 0;
 
   // calculate this frame's delta time
-  double dt = ((double)(System.nanoTime() - g_lastFrame) / NS_TO_SEC);
+  double dt = ((double)(System.nanoTime() - g_lastFrame) / NS_TO_SEC) * g_timeScale;
   g_lastFrame = System.nanoTime();
 
   // update our audio instance if it's ready
@@ -157,6 +158,24 @@ void keyPressed() {
   // F4
   if (keyCode == 115 || keyCode == 100) {
     DEBUG_OBJECT_BOUNDS = !DEBUG_OBJECT_BOUNDS;
+    return;
+  }
+  
+  // F5 decrease timescale
+  if (keyCode == 116 || keyCode == 101) {
+    g_timeScale /= 1.25;
+    return;
+  }
+  
+  // F6 rest timescale
+  if (keyCode == 117 || keyCode == 102) {
+    g_timeScale = 1;
+    return;
+  }
+  
+  // F7 increase timescale
+  if (keyCode == 118 || keyCode == 103) {
+    g_timeScale *= 1.25;
     return;
   }
 

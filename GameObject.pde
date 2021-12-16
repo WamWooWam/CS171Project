@@ -12,7 +12,7 @@ class GameObject implements Drawable {
   // pausing the game is implemented by skipping the update loop, but continuing to draw
   protected boolean skipUpdate = false;
   protected boolean wasPaused = false;
-
+  // keeps track of if the mouse is inside the current game object
   private boolean wasMouseInBounds = false;
 
   // intrinsic object properties

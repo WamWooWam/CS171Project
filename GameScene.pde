@@ -91,7 +91,7 @@ class GameSceneData {
   void keyPressed(char keyChar) {
     if (state != GameState.PLAYING) return;
 
-    if (g_ctrlPressed && keyCode == RIGHT) {
+    if (keyCode == RIGHT) {
       remainingTime = max(0, remainingTime - 10);
     }
 

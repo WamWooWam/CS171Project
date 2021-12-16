@@ -64,7 +64,7 @@ class PauseOverlay extends GameObject {
   }
 }
 
-class PauseMenu extends ButtonContainer {
+class PauseMenu extends MenuBase {
   // for the opening clip effect, we have to scale the clipping rect around its centre
   // in order to make this maths easier, we keep the width, height, centre x, centre y
   // top left corner, and top right corner values of the menu in sync here.

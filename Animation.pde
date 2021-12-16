@@ -21,6 +21,7 @@ enum LoopMode {
 //
 interface AnimationTimer {
   void start();
+  void update(double dt);
   void seek(double time);
   double getElapsedSeconds();
 }
@@ -33,32 +34,30 @@ interface TriggerAction {
   void action();
 }
 
-// 
+//
 // the animation timer is used by animations to calculate their current position relative to time
 //.
-// rather than using the frameCount, the default animation timer uses System.nanoTime, which returns a timestamp
-// in nanoseconds. this ensures the animation runs at a constant rate regardless of the actual framerate.
-//
-// note how _startTime is a long storing nanoseconds, not a float storing seconds, the latter caused an issue where
-// animations would start to appear choppy after your computer had been on for a certain period of time (around a week)
-// this was caused by floating point precision errors induced by converting such large fixed point numbers into a single
-// precision float.
-//
-// this implementation may still overflow, but this should only happen after around 280 days of continuous uptime.
+// rather than using the frameCount, the default animation timer uses the deltaTime passed to update, which
+// is derrived from System.nanoTime, which returns a timestamp in nanoseconds. 
+// this ensures the animation runs at a constant rate, accurately, regardless of the actual framerate.
 //
 class DefaultAnimationTimer implements AnimationTimer {
-  private long _startTime = 0;
+  private double time;
 
   void start() {
-    this._startTime = System.nanoTime();
+    this.time = 0;
+  }
+
+  void update(double dt) {
+    this.time += dt;
   }
 
   void seek(double time) {
-    this._startTime = System.nanoTime() - (long)(time * NS_TO_SEC);
+    this.time = time;
   }
 
   public double getElapsedSeconds() {
-    return (System.nanoTime() - this._startTime) / NS_TO_SEC;
+    return this.time;
   }
 }
 
@@ -80,7 +79,7 @@ abstract class AnimationBase extends GameObject {
     this.animationTimer = new DefaultAnimationTimer();
   }
 
-  // animation types must provide their own duration 
+  // animation types must provide their own duration
   abstract double getDuration();
 
   protected void reset() {
@@ -107,13 +106,20 @@ abstract class AnimationBase extends GameObject {
     this.attachedGameObject.children.add(this);
     g_attachedAnimations++;
   }
-  
+
   // stops an animation and detaches it from the parent object
   void stop() {
     this.isRunning = false;
     this.reset();
   }
   
+  final void updateObject(float deltaTime) {
+    this.animationTimer.update(deltaTime);
+    this.updateAnimation(deltaTime);
+  }
+  
+  protected abstract void updateAnimation(float deltaTime);
+
   // seeks an animation to a specific point in time
   void seek(double time) {
     animationTimer.seek(time);
@@ -123,7 +129,7 @@ abstract class AnimationBase extends GameObject {
   protected double getElapsedSeconds() {
     return animationTimer.getElapsedSeconds();
   }
-  
+
   // function to be called when an animation finishes
   protected void onCompleted() {
     this.reset();
@@ -137,7 +143,7 @@ class Animation extends AnimationBase {
 
   int loops;
   LoopMode loopMode;
-  
+
   Ease ease;
 
   // using a lambda makes setting properties every frame significantly simpler
@@ -178,7 +184,7 @@ class Animation extends AnimationBase {
     this.completedLoops = 0;
   }
 
-  void updateObject(float deltaTime) {
+  void updateAnimation(float deltaTime) {
     if (!this.isRunning) return;
 
     g_activeAnimations += 1;
@@ -225,7 +231,7 @@ class Trigger extends AnimationBase {
     return 0.01f;
   }
 
-  void updateObject(float deltaTime) {
+  void updateAnimation(float deltaTime) {
     if (!this.isRunning) return;
 
     g_activeAnimations += 1;
@@ -261,21 +267,21 @@ class Interval extends AnimationBase {
     nextInterval = -1;
   }
 
-  void updateObject(float deltaTime) {
+  void updateAnimation(float deltaTime) {
     if (!this.isRunning) return;
 
     g_activeAnimations += 1;
 
     // get the current time
     double rawElapsedTime = this.getElapsedSeconds();
-    
+
     // if the current time is greater than the next interval time, run the trigger
     if (rawElapsedTime >= this.nextInterval) {
       this.trigger.action();
       // store our next interval time
       this.nextInterval = rawElapsedTime + this.interval;
     }
-    
+
     // if the total time is greater than our duration
     if (rawElapsedTime >= this.duration) {
       // stop the animation
@@ -331,7 +337,7 @@ class Storyboard extends AnimationBase {
     }
     return this;
   }
-  
+
   // add an animation to run after the previously added animation
   // (not always storyboard length)
   Storyboard after(AnimationBase anim) {
@@ -363,7 +369,7 @@ class Storyboard extends AnimationBase {
     }
   }
 
-  void updateObject(float deltaTime) {
+  void updateAnimation(float deltaTime) {
     if (!this.isRunning) return;
 
     g_activeAnimations += 1;
@@ -372,7 +378,7 @@ class Storyboard extends AnimationBase {
     double elapsedTime = this.getElapsedSeconds();
     for (int i = 0; i < events.size(); i++) {
       StoryboardEvent event = events.get(i);
-      
+
       // if the event has not been run already, and its starting time is greater than or
       // equal to the current time, start the animation
       if (!event.triggered && elapsedTime >= event.startTime) {
@@ -407,6 +413,9 @@ class Storyboard extends AnimationBase {
     }
 
     void seek(double time) {
+    }
+
+    void update(double time) {
     }
 
     public double getElapsedSeconds() {

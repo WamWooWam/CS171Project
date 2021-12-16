@@ -20,7 +20,7 @@ class MenuButton extends GameObject {
   private Storyboard clickAnimation;
 
   private int index;
-  private ButtonContainer parent;
+  private MenuBase parent;
 
   private Runnable action;
 
@@ -30,7 +30,7 @@ class MenuButton extends GameObject {
     this.init(label);
   }
 
-  public MenuButton(int index, ButtonContainer parent, float x, float y, float w, float h, String label) {
+  public MenuButton(int index, MenuBase parent, float x, float y, float w, float h, String label) {
     super(x, y, w, h);
     this.index = index;
     this.parent = parent;
@@ -107,19 +107,25 @@ class MenuButton extends GameObject {
     rect(48, 0, w - 96, h);
   }
 
+  // called when the mouse enters the bounds of the button
   void onMouseEntered() {
     if (!isEnabled) return;
-
+    
+    // if we have a parent button handler
     if (this.parent != null) {
+      // set the index
       this.parent.selectedButton = index;
     } else {
+      // otherwise set a flag that makes us look selected
       this.isSelected = true;
     }
   }
 
+  // called when the mouse leaves the bounds of the button
   void onMouseLeft() {
     if (!isEnabled) return;
-
+    
+    // unselect ourselves    
     if (this.parent == null) {
       this.isSelected = false;
     }
@@ -130,6 +136,7 @@ class MenuButton extends GameObject {
     }
   }
 
+  // occurs when the mouse is clicked within our bounds
   void onMousePressed(float x, float y) {
     if (mouseButton != LEFT) return;
     if (!isEnabled) return;
@@ -137,6 +144,7 @@ class MenuButton extends GameObject {
     this.pressAnimation.begin(this);
   }
 
+  // occurs when the mouse is released 
   void onMouseReleased(float x, float y) {
     if (mouseButton != LEFT) return;
     if (!isEnabled) return;
@@ -154,7 +162,11 @@ class MenuButton extends GameObject {
   }
 }
 
-abstract class ButtonContainer extends GameObject {
+//
+// acts as the base class of menus with buttons, abstracts the creation and handing of button
+// events (i.e. keyboard focus)
+//
+abstract class MenuBase extends GameObject {
 
   // keep track of the selected button
   int selectedButton = 0;
@@ -163,7 +175,7 @@ abstract class ButtonContainer extends GameObject {
 
   private boolean mouseOverrideSelection = false;
 
-  public ButtonContainer(float x, float y, float w, float h) {
+  public MenuBase(float x, float y, float w, float h) {
     super(x, y, w, h);
 
     this.buttons = new ArrayList<MenuButton>();
@@ -178,6 +190,7 @@ abstract class ButtonContainer extends GameObject {
   }
 
   void awakeObject() {
+    // reset all buttons when we wake up
     for (int i = 0; i < buttons.size(); i++) {
       buttons.get(i).pressAnimation.stop();
       buttons.get(i).releaseAnimation.stop();
@@ -209,6 +222,7 @@ abstract class ButtonContainer extends GameObject {
   boolean onKeyPressed() {
     if (!this.shouldHandleEvents()) return false;
 
+    // when the user presses the arrow keys, first check up
     if (keyCode == UP) {
       mouseOverrideSelection = false;
       // move the selection up one
@@ -221,6 +235,7 @@ abstract class ButtonContainer extends GameObject {
       g_audio.playCue(0);
     }
 
+    // then down
     if (keyCode == DOWN) {
       mouseOverrideSelection = false;
       // move the selection down one
@@ -233,6 +248,7 @@ abstract class ButtonContainer extends GameObject {
       g_audio.playCue(0);
     }
 
+    // then if they activated the button
     if ((keyCode == ENTER || keyCode == RETURN) && selectedButton >= 0) {
       buttons.get(selectedButton).getPressAnimation().begin(this);
       activateButton();
@@ -242,16 +258,22 @@ abstract class ButtonContainer extends GameObject {
     return false;
   }
 
+  // activates the selected button
   private void activateButton() {
     if (!this.shouldHandleEvents()) return;
     this.onClick(selectedButton);
   }
 
+  // activates a specific indexed button
   private void activateButton(int idx) {
     if (!this.shouldHandleEvents()) return;
     this.onClick(idx);
   }
 
+  // when overriden, informs the menu if it should currently be handling button events
+  // besides just being active
   abstract boolean shouldHandleEvents();
+  
+  // overriden to allow the menu to handle button presses
   abstract void onClick(int idx);
 }

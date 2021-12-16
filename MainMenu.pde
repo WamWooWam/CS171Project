@@ -88,7 +88,7 @@ class MainMenu extends GameObject {
     // we draw a rectangle from the middle moving out depending on the height, we also set a clipping
     // rect to clip our child objects to our current bounds
     rect(0, ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
-    
+
     // processing docs say clip is relative to the transform, when using P2D this is a lie.
     if (USE_P2D)
       clip(MENU_LEFT, MENU_TOP + ((MENU_HEIGHT - this.currentHeight) / 2), MENU_WIDTH, this.currentHeight);
@@ -100,7 +100,7 @@ class MainMenu extends GameObject {
 //
 // this class handles the main menu page
 //
-class MainMenuPage1 extends ButtonContainer {
+class MainMenuPage1 extends MenuBase {
 
   // our parent menu
   private MainMenu menu;
@@ -266,7 +266,7 @@ class MainMenuPage2 extends GameObject {
       character.fill = color(0, 0, 0);
     }
 
-    this.startGameButton.isEnabled = this.characters.size() > 3;
+    this.startGameButton.isEnabled = this.characters.size() > 4;
 
     // relayout characters
     this.layoutCharacters();

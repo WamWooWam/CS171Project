@@ -11,7 +11,9 @@ static final boolean DEBUG_FRAME_RATE = true;
 static final boolean DEBUG_OBJECT_COUNT = true;
 static final boolean DEBUG_AUDIO = true;
 static final boolean DEBUG_ANIMATION = true;
-static final boolean USE_P2D = true;
+
+// we can use the P2D renderer if we really need to for performance
+static final boolean USE_P2D = false;
 
 // debug counters
 int g_objectUpdateCount;
@@ -25,9 +27,8 @@ double g_maxFrameTime = Double.NEGATIVE_INFINITY;
 float[] g_lastFrameTimes = new float[120];
 float[] g_lastFrameRates = new float[120];
 
-// we keep track of if the ctrl key is pressed so we can enable/disable the debugger on
-// ctrl+d
-boolean g_ctrlPressed;
+// the gloabl time scale allows us to speed up and slow down the game by a multipler
+float g_timeScale = 1f;
 
 // last frame timestamp for dt calculation
 long g_lastFrame;
@@ -69,6 +70,11 @@ enum Difficulty {
   }
 }
 
+// converts a number to its associated difficulty
+// 0 - Easy
+// 1 - Normal
+// 2 - Hard
+// 3 - Custom
 Difficulty getDifficulty(int i) {
   // this is slow, but should be called at most once per game
   // source: https://stackoverflow.com/questions/5878952/cast-int-to-enum-in-java
